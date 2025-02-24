@@ -1,0 +1,177 @@
+.app {
+  font-family: Arial, sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.city-selector {
+  margin-bottom: 20px;
+}
+
+.search-dropdown {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+}
+
+.city-search {
+  padding: 8px;
+  font-size: 16px;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.city-dropdown {
+  position: absolute;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.city-option {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.city-option:hover {
+  background-color: #f0f0f0;
+}
+
+.no-results {
+  padding: 10px;
+  text-align: center;
+  color: #666;
+}
+
+.timezone-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timezone-row {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  background: #f9f9f9;
+  display: flex;
+  align-items: center;
+  position: relative; /* Ensure positioning context for highlights */
+}
+
+.city-info {
+  min-width: 250px;
+  margin-right: 15px;
+}
+
+.city-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.city-header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.city-header button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.current-time {
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  margin-left: 10px;
+  align-self: center;
+}
+
+.timeline {
+  display: flex;
+  justify-content: space-between;
+  background: #e0e0e0;
+  padding: 5px 10px;
+  border-radius: 3px;
+  position: relative; /* Ensure positioning context for highlights */
+  flex-grow: 1;
+  margin-left: 5px;
+}
+
+.time-slot {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  padding: 5px 0;
+  cursor: pointer;
+  position: relative; /* Ensure positioning for highlight overlay */
+  box-sizing: border-box; /* Include padding and border in the element's total width/height */
+  min-width: 0; /* Ensure flex items don't grow beyond their content */
+  margin: 0 1px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.time-slot .hour {
+  font-size: 13px;
+}
+
+.time-slot .period {
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* Time of day coloring - refined day/night cycle */
+.time-slot.night {
+  background: #1a237e; /* Deep blue for night (midnight - 6am) */
+  color: #fff;
+}
+
+.time-slot.morning {
+  background: #90caf9; /* Light blue for morning (6am - 12pm) */
+  color: #333;
+}
+
+.time-slot.afternoon {
+  background: #42a5f5; /* Medium blue for afternoon (12pm - 6pm) */
+  color: #333;
+}
+
+.time-slot.evening {
+  background: #0d47a1; /* Darker blue for evening (6pm - midnight) */
+  color: #fff;
+}
+
+/* Hover highlight */
+.time-slot.highlight {
+  outline: 2px solid #ff6d00; /* Orange outline */
+  z-index: 1; /* Ensure highlighted slots are above others */
+  box-shadow: 0 0 5px rgba(255, 109, 0, 0.7); /* Add subtle orange glow */
+}
+
+/* Ensure the highlight spans across all timelines vertically */
+.timezone-container .timezone-row .timeline .time-slot {
+  z-index: 0; /* Default z-index for non-highlighted slots */
+}
