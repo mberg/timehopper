@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/timehopper/static/css/main.2556fd7a.css",
+    "main.js": "/timehopper/static/js/main.d150de56.js",
+    "static/js/453.65816d8b.chunk.js": "/timehopper/static/js/453.65816d8b.chunk.js",
+    "index.html": "/timehopper/index.html",
+    "main.2556fd7a.css.map": "/timehopper/static/css/main.2556fd7a.css.map",
+    "main.d150de56.js.map": "/timehopper/static/js/main.d150de56.js.map",
+    "453.65816d8b.chunk.js.map": "/timehopper/static/js/453.65816d8b.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.2556fd7a.css",
+    "static/js/main.d150de56.js"
+  ]
+}
