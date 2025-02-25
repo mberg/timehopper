@@ -5,6 +5,13 @@
   padding: 20px;
 }
 
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
 .city-selector {
   margin-bottom: 20px;
 }
@@ -13,6 +20,39 @@
   position: relative;
   width: 100%;
   max-width: 300px;
+}
+
+.time-format-toggle {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  background: #e0e0e0;
+  border-radius: 20px;
+  padding: 3px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-button {
+  background-color: transparent;
+  color: #666;
+  border: none;
+  border-radius: 16px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.toggle-button.active {
+  background-color: white;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .city-search {
@@ -181,24 +221,27 @@
   padding: 5px 0;
   border-radius: 3px;
   cursor: pointer;
-  position: relative; /* Ensure positioning for highlight overlay */
-  box-sizing: border-box; /* Include padding and border in the element's total width/height */
-  min-width: 0; /* Ensure flex items don't grow beyond their content */
+  position: relative;
+  box-sizing: border-box;
+  min-width: 0;
   margin: 0 1px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  height: 42px; /* Set fixed height to accommodate both formats */
 }
 
 .time-slot .hour {
   font-size: 13px;
   font-weight: bold;
+  line-height: 1.1;
 }
 
 .time-slot .period {
-  font-size: 9px;
-  line-height: 1;
+  font-size: 8px;
+  line-height: 1.1;
+  min-height: 11px; /* Add minimum height to maintain spacing even when empty */
 }
 
 /* Time of day coloring - refined day/night cycle */

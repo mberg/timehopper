@@ -23,6 +23,7 @@ const cities = [
   { name: 'Dhaka', timezone: 'Asia/Dhaka', offset: 6, timezoneName: 'BST' },
   { name: 'Dubai', timezone: 'Asia/Dubai', offset: 4, timezoneName: 'GST' },
   { name: 'Dublin', timezone: 'Europe/Dublin', offset: 0, timezoneName: 'GMT' },
+  { name: 'Geneva', timezone: 'Europe/Zurich', offset: 1, timezoneName: 'CET' },
   { name: 'Helsinki', timezone: 'Europe/Helsinki', offset: 2, timezoneName: 'EET' },
   { name: 'Hong Kong', timezone: 'Asia/Hong_Kong', offset: 8, timezoneName: 'HKT' },
   { name: 'Istanbul', timezone: 'Europe/Istanbul', offset: 3, timezoneName: 'TRT' },
@@ -73,7 +74,7 @@ const ItemTypes = {
 };
 
 // Draggable timezone component
-const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTime, getTimeForCity, getTimeline, currentDate, setHoveredTime }) => {
+const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTime, getTimeForCity, getTimeline, currentDate, setHoveredTime, use24HourFormat }) => {
   const ref = useRef(null);
 
   const [{ isDragging }, drag] = useDrag({
@@ -171,7 +172,7 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
             onMouseLeave={() => setHoveredTime(null)}
           >
             <div className="hour">{slot.time.split('\n')[0]}</div>
-            <div className="period">{slot.time.split('\n')[1]}</div>
+            {!use24HourFormat && <div className="period">{slot.time.split('\n')[1]}</div>}
           </div>
         ))}
       </div>
@@ -205,6 +206,11 @@ function App() {
   });
   const [currentDate, setCurrentDate] = useState(new Date());
   const [hoveredTime, setHoveredTime] = useState(null); // Track the hovered time (in 24-hour format)
+  const [use24HourFormat, setUse24HourFormat] = useState(() => {
+    // Load time format preference from localStorage or default to 12-hour format
+    const savedFormat = localStorage.getItem('use24HourFormat');
+    return savedFormat ? JSON.parse(savedFormat) : false;
+  });
 
   // Update time every second
   useEffect(() => {
@@ -223,6 +229,11 @@ function App() {
       localStorage.setItem('selectedCities', JSON.stringify(cityNames));
     }
   }, [selectedCities]);
+  
+  // Save time format preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('use24HourFormat', JSON.stringify(use24HourFormat));
+  }, [use24HourFormat]);
 
   const addCity = (city) => {
     if (!selectedCities.find(c => c.name === city.name)) {
@@ -246,7 +257,7 @@ function App() {
       hour: '2-digit', 
       minute: '2-digit', 
       second: '2-digit', 
-      hour12: true 
+      hour12: !use24HourFormat 
     };
     return currentDate.toLocaleTimeString('en-US', options);
   };
@@ -270,17 +281,21 @@ function App() {
         timeZone: city.timezone,
         hour: 'numeric',
         minute: hasHalfHourOffset ? 'numeric' : undefined,
-        hour12: true
+        hour12: !use24HourFormat
       };
       
       // Get the time string in the city's timezone
       let timeStr = timeAtHour.toLocaleTimeString('en-US', options);
       
-      // Split into hours and period
-      const [time, period] = timeStr.split(' ');
-      
-      // Format with line break
-      timeStr = `${time}\n${period}`;
+      // For 12-hour format, split into hours and period
+      // For 24-hour format, just use the time
+      if (!use24HourFormat) {
+        const [time, period] = timeStr.split(' ');
+        // Format with line break
+        timeStr = `${time}\n${period}`;
+      } else {
+        timeStr = `${timeStr}\n`; // Still use newline for consistent layout
+      }
       
       // Calculate what time it is in the city's timezone for coloring
       const cityTime = new Date(timeAtHour.getTime() + (city.offset * 60 * 60 * 1000));
@@ -349,17 +364,18 @@ function App() {
   return (
     <div className="app">
       <h1>Time Zone Hopper</h1>
-      <div className="city-selector">
-        <h3>Add City</h3>
-        <div className="search-dropdown">
-          <input
-            type="text"
-            placeholder="Type to search cities..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onFocus={() => setIsDropdownOpen(true)}
-            className="city-search"
-          />
+      <div className="app-header">
+        <div className="city-selector">
+          <h3>Add City</h3>
+          <div className="search-dropdown">
+            <input
+              type="text"
+              placeholder="Type to search cities..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={() => setIsDropdownOpen(true)}
+              className="city-search"
+            />
           {isDropdownOpen && (
             <div className="city-dropdown">
               {filteredCities.length > 0 ? (
@@ -383,6 +399,23 @@ function App() {
             </div>
           )}
         </div>
+        </div>
+        <div className="time-format-toggle">
+          <label className="toggle-label">
+            <button 
+              className={`toggle-button ${!use24HourFormat ? 'active' : ''}`}
+              onClick={() => setUse24HourFormat(false)}
+            >
+              AM/PM
+            </button>
+            <button 
+              className={`toggle-button ${use24HourFormat ? 'active' : ''}`}
+              onClick={() => setUse24HourFormat(true)}
+            >
+              24H
+            </button>
+          </label>
+        </div>
       </div>
       <DndProvider backend={HTML5Backend}>
         <div className="timezone-container">
@@ -398,6 +431,7 @@ function App() {
               getTimeForCity={getTimeForCity}
               getTimeline={getTimeline}
               currentDate={currentDate}
+              use24HourFormat={use24HourFormat}
             />
           ))}
         </div>
