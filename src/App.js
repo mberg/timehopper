@@ -74,7 +74,7 @@ const ItemTypes = {
 };
 
 // Draggable timezone component
-const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTime, getTimeForCity, getTimeline, currentDate, setHoveredTime, use24HourFormat, isSelected, onRowSelect }) => {
+const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTime, hoveredTimeIndex, getTimeForCity, getTimeline, currentDate, setHoveredTime, setHoveredTimeIndex, setHoveredTimeSlot, use24HourFormat, isSelected, onRowSelect }) => {
   const ref = useRef(null);
 
   const [{ isDragging }, drag] = useDrag({
@@ -168,9 +168,17 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
         {getTimeline(city, currentDate).map((slot, i) => (
           <div 
             key={i} 
-            className={`time-slot ${slot.timeOfDay} ${hoveredTime === slot.hour ? 'highlight' : ''} ${slot.isHalfHour ? 'half-hour' : ''}`}
-            onMouseEnter={() => setHoveredTime(slot.hour)}
-            onMouseLeave={() => setHoveredTime(null)}
+            className={`time-slot ${slot.timeOfDay} ${hoveredTimeIndex === i ? 'highlight' : ''} ${slot.isHalfHour ? 'half-hour' : ''}`}
+            onMouseEnter={() => {
+              setHoveredTime(slot.hour);
+              setHoveredTimeIndex(i);
+              setHoveredTimeSlot(slot);
+            }}
+            onMouseLeave={() => {
+              setHoveredTime(null);
+              setHoveredTimeIndex(null);
+              setHoveredTimeSlot(null);
+            }}
           >
             <div className="hour">{slot.time.split('\n')[0]}</div>
             {!use24HourFormat && <div className="period">{slot.time.split('\n')[1]}</div>}
@@ -411,6 +419,107 @@ function App() {
     setLastSelectedIndex(index);
   };
 
+  // Add this state to track the currently hovered time slot
+  const [hoveredTimeSlot, setHoveredTimeSlot] = useState(null);
+
+  // Add these state variables for the toast notification
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Add this state to track the hovered time slot index
+  const [hoveredTimeIndex, setHoveredTimeIndex] = useState(null);
+
+  // Update the handleCopyTimeInfo function to fix 24H mode
+  const handleCopyTimeInfo = (event) => {
+    // Check if it's a copy command (Cmd+C or Ctrl+C)
+    if ((event.metaKey || event.ctrlKey) && event.key === 'c') {
+      // Only proceed if we have selected rows and a hovered time index
+      if (selectedRows.length > 0 && hoveredTimeIndex !== null) {
+        // Build the copy text
+        let copyText = '';
+        
+        // For each selected row, add the city info
+        selectedRows.forEach(rowIndex => {
+          const city = selectedCities[rowIndex];
+          if (city) {
+            // Get the timeline for this city
+            const cityTimeline = getTimeline(city, currentDate);
+            
+            // Get the time slot at the hovered index
+            const timeSlot = cityTimeline[hoveredTimeIndex];
+            
+            if (timeSlot) {
+              // Format time according to current format setting
+              let timeString;
+              
+              if (use24HourFormat) {
+                // For 24-hour format, use the time directly from the slot
+                // This is the same approach as the AM/PM mode but formatted for 24H
+                const hourParts = timeSlot.time.split('\n')[0].trim();
+                
+                // Convert the hour to 24-hour format
+                let hour = parseInt(hourParts, 10);
+                const isPM = timeSlot.time.includes('PM') && hour < 12;
+                const isAM = timeSlot.time.includes('AM') && hour === 12;
+                
+                if (isPM) hour += 12;
+                if (isAM) hour = 0;
+                
+                // Format with leading zero
+                const hourStr = hour < 10 ? `0${hour}` : `${hour}`;
+                
+                // Add minutes
+                timeString = `${hourStr}:00`;
+                
+                // Handle half-hour timezones
+                if (timeSlot.isHalfHour) {
+                  timeString = `${hourStr}:30`;
+                }
+              } else {
+                // For 12-hour format, use the original time with AM/PM
+                timeString = timeSlot.time.replace('\n', ' ');
+              }
+              
+              copyText += `• ${city.name} (${city.timezoneName}) - ${timeString}\n`;
+            }
+          }
+        });
+        
+        // Copy to clipboard
+        if (copyText) {
+          navigator.clipboard.writeText(copyText.trim())
+            .then(() => {
+              // Show toast notification with copied content
+              setToastMessage(`Copied to clipboard!\n\n${copyText.trim()}`);
+              setShowToast(true);
+              
+              // Hide toast after 4 seconds (longer to allow reading)
+              setTimeout(() => {
+                setShowToast(false);
+              }, 4000);
+            })
+            .catch(err => {
+              console.error('Failed to copy: ', err);
+              setToastMessage('Failed to copy to clipboard');
+              setShowToast(true);
+              
+              setTimeout(() => {
+                setShowToast(false);
+              }, 3000);
+            });
+        }
+      }
+    }
+  };
+
+  // Update the useEffect dependency array
+  useEffect(() => {
+    document.addEventListener('keydown', handleCopyTimeInfo);
+    return () => {
+      document.removeEventListener('keydown', handleCopyTimeInfo);
+    };
+  }, [selectedRows, hoveredTime, hoveredTimeIndex, hoveredTimeSlot, selectedCities, use24HourFormat]);
+
   return (
     <div className="app">
       <h1>Time Zone Hopper</h1>
@@ -477,7 +586,10 @@ function App() {
               moveTimezone={moveTimezone}
               removeCity={removeCity}
               hoveredTime={hoveredTime}
+              hoveredTimeIndex={hoveredTimeIndex}
               setHoveredTime={setHoveredTime}
+              setHoveredTimeIndex={setHoveredTimeIndex}
+              setHoveredTimeSlot={setHoveredTimeSlot}
               getTimeForCity={getTimeForCity}
               getTimeline={getTimeline}
               currentDate={currentDate}
@@ -488,6 +600,13 @@ function App() {
           ))}
         </div>
       </DndProvider>
+      
+      {/* Toast notification */}
+      {showToast && (
+        <div className="toast-notification">
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }
