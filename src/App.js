@@ -74,7 +74,7 @@ const ItemTypes = {
 };
 
 // Draggable timezone component
-const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTime, getTimeForCity, getTimeline, currentDate, setHoveredTime, use24HourFormat }) => {
+const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTime, getTimeForCity, getTimeline, currentDate, setHoveredTime, use24HourFormat, isSelected, onRowSelect }) => {
   const ref = useRef(null);
 
   const [{ isDragging }, drag] = useDrag({
@@ -143,8 +143,9 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
   return (
     <div 
       ref={ref}
-      className={`timezone-row ${isDragging ? 'dragging' : ''}`}
+      className={`timezone-row ${isDragging ? 'dragging' : ''} ${isSelected ? 'selected' : ''}`}
       style={{ opacity: isDragging ? 0.5 : 1 }}
+      onClick={(e) => onRowSelect(index, e)}
     >
       <div className="drag-handle">⋮⋮</div>
       <div className="city-info">
@@ -361,6 +362,55 @@ function App() {
     .filter(city => !selectedCities.find(c => c.name === city.name))
     .filter(city => city.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
+  // Add these state variables to your App component
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [lastSelectedIndex, setLastSelectedIndex] = useState(null);
+
+  // Update the handleRowSelection function
+  const handleRowSelection = (index, event) => {
+    // Prevent default browser behavior
+    event.preventDefault();
+    
+    // Handle Shift + Click to add to selection without selecting rows in between
+    if (event.shiftKey) {
+      // If this is the first selection with shift, just select this row
+      if (selectedRows.length === 0) {
+        setSelectedRows([index]);
+        setLastSelectedIndex(index);
+        return;
+      }
+      
+      // Otherwise, add this row to the existing selection
+      if (!selectedRows.includes(index)) {
+        setSelectedRows([...selectedRows, index]);
+      } else {
+        // If already selected, deselect it
+        setSelectedRows(selectedRows.filter(i => i !== index));
+      }
+      
+      setLastSelectedIndex(index);
+      return;
+    }
+    
+    // Handle Command/Ctrl + Click for toggling selection
+    if (event.metaKey || event.ctrlKey) {
+      const isSelected = selectedRows.includes(index);
+      
+      if (isSelected) {
+        setSelectedRows(selectedRows.filter(i => i !== index));
+      } else {
+        setSelectedRows([...selectedRows, index]);
+      }
+      
+      setLastSelectedIndex(index);
+      return;
+    }
+    
+    // Default single click behavior - select only this row
+    setSelectedRows([index]);
+    setLastSelectedIndex(index);
+  };
+
   return (
     <div className="app">
       <h1>Time Zone Hopper</h1>
@@ -432,6 +482,8 @@ function App() {
               getTimeline={getTimeline}
               currentDate={currentDate}
               use24HourFormat={use24HourFormat}
+              isSelected={selectedRows.includes(index)}
+              onRowSelect={handleRowSelection}
             />
           ))}
         </div>
