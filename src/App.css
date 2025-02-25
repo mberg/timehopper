@@ -39,6 +39,7 @@
 .city-option {
   padding: 8px 12px;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .city-option:hover {
@@ -49,12 +50,21 @@
   padding: 10px;
   text-align: center;
   color: #666;
+  font-size: 14px;
 }
 
 .timezone-container {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 100px;
+  padding: 10px 0;
+  position: relative;
+}
+
+.timezone-container.dragging-over {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 5px;
 }
 
 .timezone-row {
@@ -64,7 +74,42 @@
   background: #f9f9f9;
   display: flex;
   align-items: center;
-  position: relative; /* Ensure positioning context for highlights */
+  position: relative;
+  transition: box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  cursor: default;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Removed drop indicator styles, now using react-dnd */
+
+/* Enhanced dragging styles */
+.timezone-row.dragging {
+  background: white;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  border: 1px solid #aaa;
+  z-index: 10;
+  width: calc(100% - 20px);
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.drag-handle {
+  cursor: grab;
+  padding: 0 10px;
+  color: #666;
+  font-size: 20px;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.drag-handle:hover {
+  color: #333;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 .city-info {
@@ -82,6 +127,9 @@
 .city-header h2 {
   margin: 0;
   font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .city-header button {
@@ -89,6 +137,15 @@
   border: none;
   font-size: 20px;
   cursor: pointer;
+}
+
+.timezone-badge {
+  font-size: 12px;
+  background-color: #e0e0e0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: normal;
+  color: #666;
 }
 
 .current-time {
@@ -110,7 +167,6 @@
 .timeline {
   display: flex;
   justify-content: space-between;
-  background: #e0e0e0;
   padding: 5px 10px;
   border-radius: 3px;
   position: relative; /* Ensure positioning context for highlights */
@@ -123,6 +179,7 @@
   text-align: center;
   font-size: 12px;
   padding: 5px 0;
+  border-radius: 3px;
   cursor: pointer;
   position: relative; /* Ensure positioning for highlight overlay */
   box-sizing: border-box; /* Include padding and border in the element's total width/height */
@@ -136,10 +193,11 @@
 
 .time-slot .hour {
   font-size: 13px;
+  font-weight: bold;
 }
 
 .time-slot .period {
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1;
 }
 
@@ -174,4 +232,8 @@
 /* Ensure the highlight spans across all timelines vertically */
 .timezone-container .timezone-row .timeline .time-slot {
   z-index: 0; /* Default z-index for non-highlighted slots */
+}
+
+.time-slot.half-hour .hour {
+  font-size: 12px;  /* 2px smaller than the normal 13px */
 }
