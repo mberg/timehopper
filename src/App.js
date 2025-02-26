@@ -561,30 +561,33 @@ function App() {
               onFocus={() => setIsDropdownOpen(true)}
               className="city-search"
             />
-          {isDropdownOpen && (
-            <div className="city-dropdown">
-              {filteredCities.length > 0 ? (
-                filteredCities.map(city => (
-                  <div 
-                    key={city.name} 
-                    className="city-option"
-                    onClick={() => {
-                      const cityObj = cities.find(c => c.name === city.name);
-                      addCity(cityObj);
-                      setSearchTerm('');
-                      setIsDropdownOpen(false);
-                    }}
-                  >
-                    {city.name} ({city.timezoneName})
-                  </div>
-                ))
-              ) : (
-                <div className="no-results">No cities found</div>
-              )}
-            </div>
-          )}
+            {isDropdownOpen && (
+              <div className="city-dropdown">
+                {filteredCities.length > 0 ? (
+                  filteredCities.map(city => (
+                    <div 
+                      key={city.name} 
+                      className="city-option"
+                      onClick={() => {
+                        const cityObj = cities.find(c => c.name === city.name);
+                        addCity(cityObj);
+                        setSearchTerm('');
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      {city.name} ({city.timezoneName})
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-results">No cities found</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-        </div>
+      </div>
+      
+      <div className="app-controls-container">
         <div className="app-controls">
           <div className="dark-mode-toggle">
             <label className="toggle-label">
@@ -635,6 +638,7 @@ function App() {
           </div>
         </div>
       </div>
+      
       <DndProvider backend={HTML5Backend}>
         <div className="timezone-container">
           {selectedCities.map((city, index) => (

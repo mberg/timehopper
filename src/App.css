@@ -9,11 +9,11 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .city-selector {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .search-dropdown {
@@ -32,8 +32,8 @@
   display: flex;
   align-items: center;
   background: #e0e0e0;
-  border-radius: 20px;
-  padding: 3px;
+  border-radius: 16px;
+  padding: 2px;
   cursor: pointer;
   user-select: none;
 }
@@ -42,10 +42,10 @@
   background-color: transparent;
   color: #666;
   border: none;
-  border-radius: 16px;
-  padding: 5px 12px;
+  border-radius: 14px;
+  padding: 4px 10px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   transition: all 0.2s ease;
 }
 
@@ -395,18 +395,52 @@ body.dark-mode .time-slot.evening {
   color: #fff;
 }
 
-/* App controls container - vertical layout */
-.app-controls {
+/* App controls container - horizontal layout */
+.app-controls-container {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-end;
+  justify-content: flex-end;
+  margin-bottom: 10px;
 }
 
-/* Icon styling for dark mode toggle */
+.app-controls {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Make toggles smaller */
+.toggle-label {
+  display: flex;
+  align-items: center;
+  background: #e0e0e0;
+  border-radius: 16px;
+  padding: 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-button {
+  background-color: transparent;
+  color: #666;
+  border: none;
+  border-radius: 14px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+/* Make dark mode toggle even smaller with icon-only buttons */
+.dark-mode-toggle .toggle-button {
+  padding: 4px 6px;
+}
+
 .toggle-button svg {
   display: block;
   margin: 0 auto;
+  width: 14px;
+  height: 14px;
 }
 
 body.dark-mode .toggle-button svg {
