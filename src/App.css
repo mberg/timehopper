@@ -6,14 +6,22 @@
 }
 
 .app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: none;
+}
+
+.city-picker-container {
   margin-bottom: 10px;
 }
 
 .city-selector {
-  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.city-selector h3 {
+  margin: 0;
+  white-space: nowrap;
 }
 
 .search-dropdown {
@@ -396,12 +404,6 @@ body.dark-mode .time-slot.evening {
 }
 
 /* App controls container - horizontal layout */
-.app-controls-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 10px;
-}
-
 .app-controls {
   display: flex;
   flex-direction: row;
@@ -449,4 +451,36 @@ body.dark-mode .toggle-button svg {
 
 body.dark-mode .toggle-button.active svg {
   stroke: #fff;
+}
+
+/* Update layout for search and controls alignment */
+.app-header {
+  margin-bottom: 15px;
+}
+
+.city-picker-container {
+  margin-bottom: 10px;
+}
+
+/* New row for search and controls */
+.search-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.search-dropdown {
+  position: relative;
+  flex-grow: 1;
+  max-width: 300px;
+}
+
+/* App controls in a row */
+.app-controls {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
 }
