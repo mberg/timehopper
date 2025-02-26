@@ -22,10 +22,10 @@
   max-width: 300px;
 }
 
-.time-format-toggle {
+.time-format-toggle,
+.dark-mode-toggle {
   display: flex;
   align-items: center;
-  margin-top: 10px;
 }
 
 .toggle-label {
@@ -316,4 +316,103 @@
 @keyframes fadeOut {
   from { opacity: 1; transform: translateY(0); }
   to { opacity: 0; transform: translateY(20px); }
+}
+
+/* Dark mode styles */
+body.dark-mode {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+body.dark-mode .app {
+  background-color: #121212;
+}
+
+body.dark-mode .timezone-row {
+  background: #1e1e1e;
+  border-color: #333;
+}
+
+body.dark-mode .timezone-row.selected {
+  background-color: rgba(66, 133, 244, 0.2);
+  border-color: rgba(66, 133, 244, 0.4);
+}
+
+body.dark-mode .city-search,
+body.dark-mode .city-dropdown {
+  background: #2d2d2d;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+body.dark-mode .city-option:hover {
+  background-color: #3d3d3d;
+}
+
+body.dark-mode .toggle-label {
+  background: #444;
+}
+
+body.dark-mode .toggle-button {
+  color: #aaa;
+}
+
+body.dark-mode .toggle-button.active {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+
+body.dark-mode .timezone-badge {
+  background-color: #333;
+  color: #ccc;
+}
+
+body.dark-mode .drag-handle {
+  color: #888;
+}
+
+body.dark-mode .drag-handle:hover {
+  color: #ccc;
+}
+
+/* Adjust time slot colors for dark mode */
+body.dark-mode .time-slot.night {
+  background: #0d1642; /* Darker blue for night */
+}
+
+body.dark-mode .time-slot.morning {
+  background: #1565c0; /* Darker blue for morning */
+  color: #fff;
+}
+
+body.dark-mode .time-slot.afternoon {
+  background: #0d47a1; /* Darker blue for afternoon */
+  color: #fff;
+}
+
+body.dark-mode .time-slot.evening {
+  background: #0a1b3f; /* Darker blue for evening */
+  color: #fff;
+}
+
+/* App controls container - vertical layout */
+.app-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+/* Icon styling for dark mode toggle */
+.toggle-button svg {
+  display: block;
+  margin: 0 auto;
+}
+
+body.dark-mode .toggle-button svg {
+  stroke: #aaa;
+}
+
+body.dark-mode .toggle-button.active svg {
+  stroke: #fff;
 }
