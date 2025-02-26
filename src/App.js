@@ -546,6 +546,28 @@ function App() {
     localStorage.setItem('darkMode', darkMode);
   }, [darkMode]);
 
+  // Add state to track if tips are visible
+  const [showTips, setShowTips] = useState(() => {
+    // Check localStorage for user preference
+    const hideTips = localStorage.getItem('hideTips');
+    // If user has explicitly hidden tips, don't show them
+    return hideTips !== 'true';
+  });
+
+  // Function to handle closing tips
+  const handleCloseTips = () => {
+    setShowTips(false);
+    // Save preference to localStorage
+    localStorage.setItem('hideTips', 'true');
+  };
+
+  // Add a function to show tips
+  const handleShowTips = () => {
+    setShowTips(true);
+    // Remove the "hidden" preference from localStorage
+    localStorage.removeItem('hideTips');
+  };
+
   return (
     <div className="app">
       <h1>TimeAlign</h1>
@@ -592,6 +614,14 @@ function App() {
           </div>
           
           <div className="app-controls">
+            <button 
+              className="help-button" 
+              onClick={handleShowTips}
+              aria-label="Show help tips"
+            >
+              Help
+            </button>
+            
             <div className="dark-mode-toggle">
               <label className="toggle-label">
                 <button 
@@ -667,6 +697,27 @@ function App() {
           ))}
         </div>
       </DndProvider>
+      
+      {/* Tips section */}
+      {showTips && (
+        <div className="tips-section">
+          <div className="tips-header">
+            <h3>Tips</h3>
+            <button 
+              className="close-tips-btn" 
+              onClick={handleCloseTips}
+              aria-label="Close tips"
+            >
+              ×
+            </button>
+          </div>
+          <ul>
+            <li>
+              <kbd>⌘</kbd>+<kbd>Shift</kbd> to select timezones you want, hover over time you want then <kbd>⌘</kbd>+<kbd>C</kbd> to copy then paste.
+            </li>
+          </ul>
+        </div>
+      )}
       
       {/* Toast notification */}
       {showToast && (
