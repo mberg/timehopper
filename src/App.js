@@ -548,7 +548,7 @@ function App() {
 
   return (
     <div className="app">
-      <h1>Time Zone Hopper</h1>
+      <h1>TimeAlign</h1>
       
       {/* App header without toggles */}
       <div className="app-header">
