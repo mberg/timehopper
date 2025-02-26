@@ -649,7 +649,7 @@ function App() {
           </div>
           <ul>
             <li>
-              <kbd>⌘</kbd>+<kbd>Shift</kbd> to select timezones you want, hover over time you want then <kbd>⌘</kbd>+<kbd>C</kbd> to copy then paste.
+              <kbd>⌘</kbd>+<kbd>Shift</kbd> to select timezones you want, then hover over time <kbd>⌘</kbd>+<kbd>C</kbd> to copy and paste.
             </li>
           </ul>
         </div>
