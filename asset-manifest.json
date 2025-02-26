@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/timehopper/static/css/main.598fc237.css",
-    "main.js": "/timehopper/static/js/main.71ad506a.js",
+    "main.css": "/timehopper/static/css/main.a3b4b25a.css",
+    "main.js": "/timehopper/static/js/main.e005f664.js",
     "static/js/453.65816d8b.chunk.js": "/timehopper/static/js/453.65816d8b.chunk.js",
     "index.html": "/timehopper/index.html",
-    "main.598fc237.css.map": "/timehopper/static/css/main.598fc237.css.map",
-    "main.71ad506a.js.map": "/timehopper/static/js/main.71ad506a.js.map",
+    "main.a3b4b25a.css.map": "/timehopper/static/css/main.a3b4b25a.css.map",
+    "main.e005f664.js.map": "/timehopper/static/js/main.e005f664.js.map",
     "453.65816d8b.chunk.js.map": "/timehopper/static/js/453.65816d8b.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.598fc237.css",
-    "static/js/main.71ad506a.js"
+    "static/css/main.a3b4b25a.css",
+    "static/js/main.e005f664.js"
   ]
 }
