@@ -10,6 +10,7 @@ const cities = [
   { name: 'Berlin', timezone: 'Europe/Berlin', offset: 1, timezoneName: 'CET' },
   { name: 'Bogota', timezone: 'America/Bogota', offset: -5, timezoneName: 'COT' },
   { name: 'Boston', timezone: 'America/New_York', offset: -5, timezoneName: 'EST' },
+  { name: 'Brazzaville', timezone: 'Africa/Brazzaville', offset: 1, timezoneName: 'WAT' },
   { name: 'Brussels', timezone: 'Europe/Brussels', offset: 1, timezoneName: 'CET' },
   { name: 'Buenos Aires', timezone: 'America/Argentina/Buenos_Aires', offset: -3, timezoneName: 'ART' },
   { name: 'Burlington', timezone: 'America/New_York', offset: -5, timezoneName: 'EST' },

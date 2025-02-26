@@ -506,7 +506,7 @@ function App() {
 
   return (
     <div className="app">
-      <h1>TimeAlign</h1>
+      <h1>TimeHopper</h1>
       
       {/* App header without toggles */}
       <div className="app-header">
