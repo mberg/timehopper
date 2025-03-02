@@ -141,6 +141,7 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
           <div 
             key={i} 
             className={`time-slot ${slot.timeOfDay} ${hoveredTimeIndex === i ? 'highlight' : ''} ${slot.isHalfHour ? 'half-hour' : ''}`}
+            data-is-midnight={slot.isMidnight ? "true" : "false"}
             onMouseEnter={() => {
               setHoveredTime(slot.hour);
               setHoveredTimeIndex(i);
@@ -311,22 +312,38 @@ function App() {
         hour12: !use24HourFormat
       };
       
-      // Get the time string in the city's timezone
-      let timeStr = timeAtHour.toLocaleTimeString('en-US', options);
-      
-      // For 12-hour format, split into hours and period
-      // For 24-hour format, just use the time
-      if (!use24HourFormat) {
-        const [time, period] = timeStr.split(' ');
-        // Format with line break
-        timeStr = `${time}\n${period}`;
-      } else {
-        timeStr = `${timeStr}\n`; // Still use newline for consistent layout
-      }
-      
       // Calculate what time it is in the city's timezone for coloring
       const cityTime = new Date(timeAtHour.getTime() + (city.offset * 60 * 60 * 1000));
       const cityHour = cityTime.getUTCHours();
+      
+      // Get the time string in the city's timezone
+      let timeStr;
+      
+      // Special case for midnight (when cityHour is 0) - show date instead
+      if (cityHour === 0 && !use24HourFormat) {
+        // Create a date object in the city's timezone
+        const dateInTimezone = new Date(timeAtHour.toLocaleString('en-US', { timeZone: city.timezone }));
+        
+        // Format as "Mar\n3" (month and day)
+        const month = dateInTimezone.toLocaleString('en-US', { month: 'short', timeZone: city.timezone });
+        const day = dateInTimezone.getDate();
+        
+        // Use a space character for the vertical gap
+        timeStr = `${month}\n${day}`;
+      } else {
+        // For all other hours, use the existing logic
+        timeStr = timeAtHour.toLocaleTimeString('en-US', options);
+        
+        // For 12-hour format, split into hours and period
+        // For 24-hour format, just use the time
+        if (!use24HourFormat) {
+          const [time, period] = timeStr.split(' ');
+          // Format with line break
+          timeStr = `${time}\n${period}`;
+        } else {
+          timeStr = `${timeStr}\n`; // Still use newline for consistent layout
+        }
+      }
       
       // Determine time of day for coloring
       let timeOfDay;
@@ -352,7 +369,8 @@ function App() {
         time: timeStr, 
         hour: i, 
         timeOfDay: timeOfDay,
-        isHalfHour: hasHalfHourOffset
+        isHalfHour: hasHalfHourOffset,
+        isMidnight: cityHour === 0 && !use24HourFormat
       });
     }
     return times;

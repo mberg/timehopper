@@ -717,3 +717,15 @@ body.dark-mode .context-menu-item {
 body.dark-mode .context-menu-item:hover {
   background-color: #444;
 }
+
+/* Styling for midnight date display */
+.time-slot[data-is-midnight="true"] .hour {
+  font-size: 11px; /* Smaller font for month */
+  line-height: 1.1;
+}
+
+.time-slot[data-is-midnight="true"] .period {
+  font-size: 13px; /* Larger font for day */
+  font-weight: 400; /* Make the day slightly bolder */
+  margin-top: 3px; /* Add vertical gap between month and day */
+}
