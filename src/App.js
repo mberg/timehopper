@@ -10,8 +10,11 @@ const ItemTypes = {
 };
 
 // Draggable timezone component
-const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTime, hoveredTimeIndex, getTimeForCity, getTimeline, currentDate, setHoveredTime, setHoveredTimeIndex, setHoveredTimeSlot, use24HourFormat, isSelected, onRowSelect }) => {
+const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTime, hoveredTimeIndex, getTimeForCity, getTimeline, currentDate, setHoveredTime, setHoveredTimeIndex, setHoveredTimeSlot, use24HourFormat, isSelected, onRowSelect, isHomeTimezone, setHomeCity }) => {
   const ref = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
 
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.TIMEZONE,
@@ -76,12 +79,37 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
   // Initialize drag and drop into our ref
   drag(drop(ref));
 
+  // Handle right-click to show context menu
+  const handleContextMenu = (e) => {
+    e.preventDefault(); // Prevent default browser context menu
+    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    setShowContextMenu(true);
+  };
+
+  // Handle clicking outside to close context menu
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowContextMenu(false);
+    };
+    
+    if (showContextMenu) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showContextMenu]);
+
   return (
     <div 
       ref={ref}
-      className={`timezone-row ${isDragging ? 'dragging' : ''} ${isSelected ? 'selected' : ''}`}
+      className={`timezone-row ${isDragging ? 'dragging' : ''} ${isSelected ? 'selected' : ''} ${isHomeTimezone ? 'home-timezone' : ''}`}
       style={{ opacity: isDragging ? 0.5 : 1 }}
       onClick={(e) => onRowSelect(index, e)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onContextMenu={handleContextMenu}
     >
       <div className="drag-handle">⋮⋮</div>
       <div className="city-info">
@@ -89,6 +117,14 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
           <h2>
             {city.name} 
             <span className="timezone-badge">{city.timezoneName}</span>
+            {isHomeTimezone && (
+              <span className="home-indicator">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+              </span>
+            )}
           </h2>
         </div>
         <div className="current-time">
@@ -121,7 +157,51 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
           </div>
         ))}
       </div>
-      <button className="close-btn" onClick={() => removeCity(city.name)}>×</button>
+      <div className="row-actions">
+        <button 
+          className="close-btn" 
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent row selection
+            removeCity(city.name);
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Context Menu */}
+      {showContextMenu && (
+        <div 
+          className="context-menu"
+          style={{ 
+            position: 'fixed', 
+            top: contextMenuPosition.y, 
+            left: contextMenuPosition.x 
+          }}
+        >
+          {isHomeTimezone ? (
+            <button 
+              className="context-menu-item"
+              onClick={() => {
+                setHomeCity(null); // Unset home timezone
+                setShowContextMenu(false);
+              }}
+            >
+              Unset as Home Timezone
+            </button>
+          ) : (
+            <button 
+              className="context-menu-item"
+              onClick={() => {
+                setHomeCity(city.name);
+                setShowContextMenu(false);
+              }}
+            >
+              Set as Home Timezone
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -504,6 +584,27 @@ function App() {
     localStorage.removeItem('hideTips');
   };
 
+  // Add state for home timezone
+  const [homeTimezone, setHomeTimezone] = useState(() => {
+    // Load home timezone from localStorage or default to null
+    const savedHomeTimezone = localStorage.getItem('homeTimezone');
+    return savedHomeTimezone || null;
+  });
+
+  // Save home timezone to localStorage when it changes
+  useEffect(() => {
+    if (homeTimezone) {
+      localStorage.setItem('homeTimezone', homeTimezone);
+    } else {
+      localStorage.removeItem('homeTimezone');
+    }
+  }, [homeTimezone]);
+
+  // Function to set home timezone
+  const setHomeCity = (cityName) => {
+    setHomeTimezone(cityName);
+  };
+
   return (
     <div className="app">
       <h1>TimeHopper</h1>
@@ -629,6 +730,8 @@ function App() {
               use24HourFormat={use24HourFormat}
               isSelected={selectedRows.includes(index)}
               onRowSelect={handleRowSelection}
+              isHomeTimezone={city.name === homeTimezone}
+              setHomeCity={setHomeCity}
             />
           ))}
         </div>
@@ -650,6 +753,9 @@ function App() {
           <ul>
             <li>
               <kbd>⌘</kbd>+<kbd>Shift</kbd> to select timezones you want, then hover over time <kbd>⌘</kbd>+<kbd>C</kbd> to copy and paste.
+            </li>
+            <li>
+              Right click to set home timezone.
             </li>
           </ul>
         </div>
