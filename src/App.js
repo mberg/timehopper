@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { DateTime } from 'luxon';
 import './App.css';
 import cities from './data/cities';
 
@@ -10,7 +11,27 @@ const ItemTypes = {
 };
 
 // Draggable timezone component
-const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTime, hoveredTimeIndex, getTimeForCity, getTimeline, currentDate, setHoveredTime, setHoveredTimeIndex, setHoveredTimeSlot, use24HourFormat, isSelected, onRowSelect, isHomeTimezone, setHomeCity }) => {
+const DraggableTimezoneRow = ({ 
+  city, 
+  index, 
+  moveTimezone, 
+  removeCity, 
+  hoveredTime, 
+  hoveredTimeIndex, 
+  getTimeForCity, 
+  getTimeline, 
+  referenceDateTime, 
+  setHoveredTime, 
+  setHoveredTimeIndex, 
+  setHoveredTimeSlot, 
+  use24HourFormat, 
+  isSelected, 
+  onRowSelect, 
+  isHomeTimezone, 
+  setHomeCity,
+  currentTime,
+  homeCity
+}) => {
   const ref = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
@@ -101,6 +122,30 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
     };
   }, [showContextMenu]);
 
+  // Get the current time in this city's timezone
+  const cityDateTime = currentTime.setZone(city.timezone);
+  
+  // Calculate offset from home timezone
+  const getOffsetFromHome = () => {
+    if (isHomeTimezone || !homeCity) return null;
+    
+    // Get the current time in both timezones
+    const cityTime = DateTime.now().setZone(city.timezone);
+    const homeTime = DateTime.now().setZone(homeCity.timezone);
+    
+    // Calculate the offset in hours
+    const offsetMinutes = cityTime.offset - homeTime.offset;
+    const offsetHours = offsetMinutes / 60;
+    
+    // Format the offset string
+    const sign = offsetHours >= 0 ? '+' : '';
+    const formattedOffset = offsetHours === 0 ? '±0' : `${sign}${offsetHours}`;
+    
+    return formattedOffset;
+  };
+  
+  const offsetFromHome = getOffsetFromHome();
+  
   return (
     <div 
       ref={ref}
@@ -116,7 +161,12 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
         <div className="city-header">
           <h2>
             {city.name} 
-            <span className="timezone-badge">{city.timezoneName}</span>
+            <span className="timezone-badge">
+              {city.timezoneName}
+            </span>
+            {offsetFromHome && (
+              <span className="offset-badge">{offsetFromHome}</span>
+            )}
             {isHomeTimezone && (
               <span className="home-indicator">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -128,8 +178,7 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
           </h2>
         </div>
         <div className="current-time">
-          {getTimeForCity(city)} {currentDate.toLocaleDateString('en-US', { 
-            timeZone: city.timezone, 
+          {getTimeForCity(city)} {cityDateTime.toLocaleString({ 
             weekday: 'short', 
             month: 'short', 
             day: 'numeric' 
@@ -137,7 +186,7 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
         </div>
       </div>
       <div className="timeline">
-        {getTimeline(city, currentDate).map((slot, i) => (
+        {getTimeline(city, referenceDateTime).map((slot, i) => (
           <div 
             key={i} 
             className={`time-slot ${slot.timeOfDay} ${hoveredTimeIndex === i ? 'highlight' : ''} ${slot.isHalfHour ? 'half-hour' : ''}`}
@@ -154,7 +203,7 @@ const DraggableTimezoneRow = ({ city, index, moveTimezone, removeCity, hoveredTi
             }}
           >
             <div className="hour">{slot.time.split('\n')[0]}</div>
-            {!use24HourFormat && <div className="period">{slot.time.split('\n')[1]}</div>}
+            <div className="period">{slot.time.split('\n')[1] || ''}</div>
           </div>
         ))}
       </div>
@@ -215,38 +264,112 @@ function App() {
       try {
         // Parse the saved city names and find the matching city objects
         const cityNames = JSON.parse(savedCities);
-        return cityNames.map(name => cities.find(c => c.name === name)).filter(Boolean);
+        const loadedCities = cityNames
+          .map(name => cities.find(c => c.name === name))
+          .filter(city => city !== undefined); // Filter out any undefined cities
+        
+        // If we have valid cities, return them
+        if (loadedCities.length > 0) {
+          return loadedCities;
+        }
       } catch (e) {
         console.error('Error loading saved cities', e);
       }
     }
     
-    // Default cities if nothing is saved
+    // Default cities if nothing is saved or if there was an error
     return [
-      cities.find(c => c.name === 'Burlington'),
-      cities.find(c => c.name === 'Nairobi'),
-      cities.find(c => c.name === 'Dakar'),
-      cities.find(c => c.name === 'Jakarta'),
-      cities.find(c => c.name === 'San Francisco')
-    ];
+      cities.find(c => c.name === 'New York, NY') || cities[0],
+      cities.find(c => c.name === 'Nairobi, Kenya') || cities[1],
+      cities.find(c => c.name === 'Dakar, Senegal') || cities[2],
+      cities.find(c => c.name === 'Jakarta, Indonesia') || cities[3],
+      cities.find(c => c.name === 'San Francisco, CA') || cities[4]
+    ].filter(Boolean); // Filter out any undefined cities
   });
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [hoveredTime, setHoveredTime] = useState(null); // Track the hovered time (in 24-hour format)
+  
+  // State for search functionality
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  // State for time and display preferences
+  const [currentDate, setCurrentDate] = useState(DateTime.now());
+  const [hoveredTime, setHoveredTime] = useState(null);
+  const [hoveredTimeIndex, setHoveredTimeIndex] = useState(null);
+  const [hoveredTimeSlot, setHoveredTimeSlot] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  
+  // User preferences
   const [use24HourFormat, setUse24HourFormat] = useState(() => {
     // Check if user has a preference stored
     const savedFormat = localStorage.getItem('use24HourFormat');
     // Return the saved preference or default to false (AM/PM)
     return savedFormat === 'true';
   });
-
-  // Update time every second
+  
+  // Add state for home timezone
+  const [homeTimezone, setHomeTimezone] = useState(() => {
+    const savedHomeTimezone = localStorage.getItem('homeTimezone');
+    if (savedHomeTimezone) {
+      // Check if the saved home timezone exists in our cities list
+      const exists = cities.some(city => city.name === savedHomeTimezone);
+      if (exists) {
+        return savedHomeTimezone;
+      }
+    }
+    // Default to the first selected city if no home timezone is set
+    return selectedCities.length > 0 ? selectedCities[0].name : null;
+  });
+  
+  // Add an effect to set the first city as home if no home is set
+  useEffect(() => {
+    // If no home timezone is set but we have cities, set the first one as home
+    if (!homeTimezone && selectedCities.length > 0) {
+      setHomeCity(selectedCities[0].name);
+    }
+  }, [homeTimezone, selectedCities]);
+  
+  // Reference DateTime - midnight in the home timezone
+  const [referenceDateTime, setReferenceDateTime] = useState(() => {
+    // Get current time
+    const now = DateTime.now();
+    
+    // If we have a home timezone, set to midnight in that timezone
+    if (homeTimezone) {
+      const homeCity = cities.find(c => c.name === homeTimezone);
+      if (homeCity) {
+        // Create a DateTime at midnight in the home timezone
+        return DateTime.now().setZone(homeCity.timezone).startOf('day');
+      }
+    }
+    
+    // Default to midnight in local timezone if no home timezone
+    return now.startOf('day');
+  });
+  
+  // Update reference time when home timezone changes
+  useEffect(() => {
+    if (homeTimezone) {
+      const homeCity = cities.find(c => c.name === homeTimezone);
+      if (homeCity) {
+        // Set to midnight in the home timezone
+        setReferenceDateTime(DateTime.now().setZone(homeCity.timezone).startOf('day'));
+      }
+    } else {
+      // Default to midnight in local timezone if no home timezone
+      setReferenceDateTime(DateTime.now().startOf('day'));
+    }
+  }, [homeTimezone]);
+  
+  // Update time every minute
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentDate(new Date());
-    }, 1000);
+      setCurrentDate(DateTime.now());
+    }, 60000); // Update every minute
     return () => clearInterval(timer);
   }, []);
-
+  
   // Save cities to localStorage whenever the selection changes
   useEffect(() => {
     // Only save if we have cities selected
@@ -257,110 +380,191 @@ function App() {
     }
   }, [selectedCities]);
   
-  // Add this effect to save time format preference
+  // Save time format preference
   useEffect(() => {
-    // Save preference to localStorage
     localStorage.setItem('use24HourFormat', use24HourFormat);
   }, [use24HourFormat]);
-
-  const addCity = (city) => {
-    if (!selectedCities.find(c => c.name === city.name)) {
-      setSelectedCities([...selectedCities, city]);
+  
+  // Save home timezone to localStorage when it changes
+  useEffect(() => {
+    if (homeTimezone) {
+      localStorage.setItem('homeTimezone', homeTimezone);
+    } else {
+      localStorage.removeItem('homeTimezone');
+    }
+  }, [homeTimezone]);
+  
+  // Update the setHomeCity function to save to localStorage
+  const setHomeCity = (cityName) => {
+    setHomeTimezone(cityName);
+    if (cityName) {
+      localStorage.setItem('homeTimezone', cityName);
+    } else {
+      localStorage.removeItem('homeTimezone');
+      
+      // If unsetting the home city and we have cities, set the first one as home
+      if (selectedCities.length > 0) {
+        setHomeTimezone(selectedCities[0].name);
+        localStorage.setItem('homeTimezone', selectedCities[0].name);
+      }
     }
   };
-
-  const removeCity = (cityName) => {
-    const updatedCities = selectedCities.filter(city => city.name !== cityName);
-    setSelectedCities(updatedCities);
+  
+  // Filter cities based on search term
+  const filteredCities = cities.filter(city => {
+    // Check if the city name includes the search term (case insensitive)
+    const matchesSearch = city.name.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // If we removed the last city, clear localStorage
-    if (updatedCities.length === 0) {
-      localStorage.removeItem('selectedCities');
+    // Check if the city is already selected
+    const isAlreadySelected = selectedCities.some(selectedCity => 
+      selectedCity && selectedCity.name === city.name
+    );
+    
+    // Only include cities that match the search and aren't already selected
+    return matchesSearch && !isAlreadySelected;
+  });
+  
+  // Add a city to the selected list
+  const addCity = (city) => {
+    // Check if city is already in the list
+    if (!selectedCities.some(c => c.name === city.name)) {
+      const newSelectedCities = [...selectedCities, city];
+      setSelectedCities(newSelectedCities);
+      
+      // Save to localStorage
+      localStorage.setItem('selectedCities', JSON.stringify(newSelectedCities.map(c => c.name)));
+      
+      // Reset search state
+      setSearchTerm('');
+      setIsDropdownOpen(false);
+      setHighlightedIndex(0);
     }
   };
-
-  const getTimeForCity = (city) => {
-    const options = { 
-      timeZone: city.timezone, 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      second: '2-digit', 
-      hour12: !use24HourFormat 
-    };
-    return currentDate.toLocaleTimeString('en-US', options);
+  
+  // Remove a city from the selected list
+  const removeCity = (cityName) => {
+    // If removing the home timezone, unset it
+    if (cityName === homeTimezone) {
+      setHomeTimezone(null);
+    }
+    
+    setSelectedCities(selectedCities.filter(city => city.name !== cityName));
   };
+  
+  // Move a timezone in the list (for drag and drop)
+  const moveTimezone = (fromIndex, toIndex) => {
+    const updatedCities = [...selectedCities];
+    const [movedCity] = updatedCities.splice(fromIndex, 1);
+    updatedCities.splice(toIndex, 0, movedCity);
+    setSelectedCities(updatedCities);
+  };
+  
+  // Add state for current time
+  const [currentTime, setCurrentTime] = useState(DateTime.now());
 
-  const getTimeline = (city, day) => {
-    // Create a date object for reference (current day in user's local timezone)
-    const referenceDate = new Date(day);
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(DateTime.now());
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
+
+  // Update the getTimeForCity function to match the timeline format for non-hour offsets
+  const getTimeForCity = (city) => {
+    // Get the current time in this city's timezone
+    const cityTime = currentTime.setZone(city.timezone);
+    
+    // Check if the timezone has a non-hour offset (like India's +5:30)
+    const hasNonHourOffset = cityTime.offset % 60 !== 0;
+    
+    // Format the time based on user preference and offset
+    if (use24HourFormat) {
+      if (hasNonHourOffset) {
+        // For 24-hour format with non-hour offsets, show hour and minutes separately
+        return `${cityTime.toFormat('HH')}:${cityTime.toFormat('mm')}`;
+      } else if (cityTime.minute !== 0) {
+        // For regular timezones with non-zero minutes
+        return cityTime.toFormat('HH:mm');
+      } else {
+        // For regular timezones with zero minutes
+        return cityTime.toFormat('HH');
+      }
+    } else {
+      // For 12-hour format, always show minutes for non-hour offsets
+      if (hasNonHourOffset || cityTime.minute !== 0) {
+        return cityTime.toFormat('h:mm a');
+      } else {
+        return cityTime.toFormat('h a');
+      }
+    }
+  };
+  
+  // Update the getTimeline function to display non-hour offset times in 24H mode with hour and minutes on separate lines
+  const getTimeline = (city, referenceDateTime) => {
     const times = [];
     
-    // Check if timezone has a half-hour offset
-    const hasHalfHourOffset = city.offset % 1 !== 0;
+    // Check if timezone has a non-hour offset
+    const hasNonHourOffset = cityTime => cityTime.offset % 60 !== 0;
     
     // For each hour of the day (0-23)
     for (let i = 0; i < 24; i++) {
-      // Create a new date object for this hour
-      const timeAtHour = new Date(referenceDate);
-      timeAtHour.setHours(i, 0, 0, 0);
+      // Create a DateTime for this hour in the reference timezone
+      const slotDateTime = referenceDateTime.plus({ hours: i });
       
-      // Format using the city's timezone for display
-      const options = { 
-        timeZone: city.timezone,
-        hour: 'numeric',
-        minute: hasHalfHourOffset ? 'numeric' : undefined,
-        hour12: !use24HourFormat
-      };
+      // Convert to the city's timezone
+      const localSlotTime = slotDateTime.setZone(city.timezone);
       
-      // Calculate what time it is in the city's timezone for coloring
-      const cityTime = new Date(timeAtHour.getTime() + (city.offset * 60 * 60 * 1000));
-      const cityHour = cityTime.getUTCHours();
+      // Get the hour and minute in the city's timezone
+      const localHour = localSlotTime.hour;
+      const localMinute = localSlotTime.minute;
+      const isNonHourOffset = hasNonHourOffset(localSlotTime);
       
-      // Get the time string in the city's timezone
+      // Format the time string based on user preference
       let timeStr;
       
-      // Special case for midnight (when cityHour is 0) - show date instead
-      if (cityHour === 0 && !use24HourFormat) {
-        // Create a date object in the city's timezone
-        const dateInTimezone = new Date(timeAtHour.toLocaleString('en-US', { timeZone: city.timezone }));
-        
+      // Special case for midnight (when hour is 0) - show date instead
+      if (localHour === 0 && localMinute === 0) {
         // Format as "Mar\n3" (month and day)
-        const month = dateInTimezone.toLocaleString('en-US', { month: 'short', timeZone: city.timezone });
-        const day = dateInTimezone.getDate();
+        const month = localSlotTime.toFormat('MMM');
+        const day = localSlotTime.toFormat('d');
         
-        // Use a space character for the vertical gap
         timeStr = `${month}\n${day}`;
       } else {
-        // For all other hours, use the existing logic
-        timeStr = timeAtHour.toLocaleTimeString('en-US', options);
-        
-        // For 12-hour format, split into hours and period
-        // For 24-hour format, just use the time
-        if (!use24HourFormat) {
-          const [time, period] = timeStr.split(' ');
-          // Format with line break
-          timeStr = `${time}\n${period}`;
+        if (use24HourFormat) {
+          // 24-hour format
+          if (isNonHourOffset) {
+            // For non-hour offsets in 24H mode, show hour and minutes on separate lines
+            timeStr = `${localSlotTime.toFormat('HH')}\n${localSlotTime.toFormat('mm')}`;
+          } else if (localMinute !== 0) {
+            // For regular timezones with non-zero minutes
+            timeStr = localSlotTime.toFormat('HH:mm\n');
+          } else {
+            // For regular timezones with zero minutes
+            timeStr = localSlotTime.toFormat('HH\n');
+          }
         } else {
-          timeStr = `${timeStr}\n`; // Still use newline for consistent layout
+          // 12-hour format
+          const hour12 = localHour % 12 || 12; // Convert 0 to 12
+          const period = localHour >= 12 ? 'PM' : 'AM';
+          
+          if (isNonHourOffset || localMinute !== 0) {
+            timeStr = `${hour12}:${localSlotTime.toFormat('mm')}\n${period}`;
+          } else {
+            timeStr = `${hour12}\n${period}`;
+          }
         }
       }
       
       // Determine time of day for coloring
       let timeOfDay;
-      if (cityHour >= 0 && cityHour < 4) {
+      if (localHour >= 0 && localHour < 7) {
         timeOfDay = 'night';
-      } else if (cityHour >= 4 && cityHour < 7) {
-        timeOfDay = 'night';
-      } else if (cityHour >= 7 && cityHour < 10) {
+      } else if (localHour >= 7 && localHour < 12) {
         timeOfDay = 'morning';
-      } else if (cityHour >= 10 && cityHour < 14) {
-        timeOfDay = 'morning';
-      } else if (cityHour >= 14 && cityHour < 17) {
+      } else if (localHour >= 12 && localHour < 18) {
         timeOfDay = 'afternoon';
-      } else if (cityHour >= 17 && cityHour < 20) {
-        timeOfDay = 'afternoon';
-      } else if (cityHour >= 20 && cityHour < 22) {
-        timeOfDay = 'evening';
       } else {
         timeOfDay = 'evening';
       }
@@ -369,194 +573,102 @@ function App() {
         time: timeStr, 
         hour: i, 
         timeOfDay: timeOfDay,
-        isHalfHour: hasHalfHourOffset,
-        isMidnight: cityHour === 0 && !use24HourFormat
+        isHalfHour: isNonHourOffset,
+        isMidnight: localHour === 0 && localMinute === 0,
+        dateTime: localSlotTime
       });
     }
+    
     return times;
   };
-
-  // Move timezone handler for drag and drop
-  const moveTimezone = (dragIndex, hoverIndex) => {
-    const dragTimezone = selectedCities[dragIndex];
-    const newCities = [...selectedCities];
-    newCities.splice(dragIndex, 1);
-    newCities.splice(hoverIndex, 0, dragTimezone);
-    setSelectedCities(newCities);
-  };
-
-  // State for city search filter
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  // Handle clicks outside the dropdown to close it
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (!event.target.closest('.search-dropdown')) {
-        setIsDropdownOpen(false);
-      }
-    }
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-  
-  // Filter available cities based on search term
-  const filteredCities = cities
-    .filter(city => !selectedCities.find(c => c.name === city.name))
-    .filter(city => city.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-  // Add these state variables to your App component
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [lastSelectedIndex, setLastSelectedIndex] = useState(null);
-
-  // Update the handleRowSelection function
+  // Handle row selection for multi-select
   const handleRowSelection = (index, event) => {
-    // Prevent default browser behavior
-    event.preventDefault();
-    
-    // Handle Shift + Click to add to selection without selecting rows in between
-    if (event.shiftKey) {
-      // If this is the first selection with shift, just select this row
-      if (selectedRows.length === 0) {
-        setSelectedRows([index]);
-        setLastSelectedIndex(index);
-        return;
-      }
-      
-      // Otherwise, add this row to the existing selection
-      if (!selectedRows.includes(index)) {
-        setSelectedRows([...selectedRows, index]);
-      } else {
-        // If already selected, deselect it
-        setSelectedRows(selectedRows.filter(i => i !== index));
-      }
-      
-      setLastSelectedIndex(index);
-      return;
-    }
-    
-    // Handle Command/Ctrl + Click for toggling selection
     if (event.metaKey || event.ctrlKey) {
-      const isSelected = selectedRows.includes(index);
-      
-      if (isSelected) {
+      // Toggle selection with Cmd/Ctrl key
+      if (selectedRows.includes(index)) {
         setSelectedRows(selectedRows.filter(i => i !== index));
       } else {
         setSelectedRows([...selectedRows, index]);
       }
+    } else if (event.shiftKey && selectedRows.length > 0) {
+      // Range selection with Shift key
+      const lastSelected = selectedRows[selectedRows.length - 1];
+      const start = Math.min(lastSelected, index);
+      const end = Math.max(lastSelected, index);
+      const range = Array.from({ length: end - start + 1 }, (_, i) => start + i);
       
-      setLastSelectedIndex(index);
-      return;
+      // Merge with existing selection, avoiding duplicates
+      const newSelection = [...new Set([...selectedRows, ...range])];
+      setSelectedRows(newSelection);
+    } else {
+      // Single selection without modifier keys
+      setSelectedRows([index]);
     }
-    
-    // Default single click behavior - select only this row
-    setSelectedRows([index]);
-    setLastSelectedIndex(index);
   };
-
-  // Add this state to track the currently hovered time slot
-  const [hoveredTimeSlot, setHoveredTimeSlot] = useState(null);
-
-  // Add these state variables for the toast notification
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-
-  // Add this state to track the hovered time slot index
-  const [hoveredTimeIndex, setHoveredTimeIndex] = useState(null);
-
-  // Update the handleCopyTimeInfo function to fix 24H mode
-  const handleCopyTimeInfo = (event) => {
-    // Check if it's a copy command (Cmd+C or Ctrl+C)
-    if ((event.metaKey || event.ctrlKey) && event.key === 'c') {
-      // Only proceed if we have selected rows and a hovered time index
-      if (selectedRows.length > 0 && hoveredTimeIndex !== null) {
-        // Build the copy text
+  
+  // Handle copying time information
+  const handleCopyTimeInfo = (e) => {
+    // Check if Cmd+C (or Ctrl+C) is pressed
+    if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
+      // Only proceed if we have a hovered time and selected rows
+      if (hoveredTimeSlot && selectedRows.length > 0) {
+        // Build the text to copy
         let copyText = '';
         
-        // For each selected row, add the city info
-        selectedRows.forEach(rowIndex => {
-          const city = selectedCities[rowIndex];
+        // Get the selected cities
+        const citiesToCopy = selectedRows.map(index => selectedCities[index]);
+        
+        // For each selected city, get the time at the hovered slot
+        citiesToCopy.forEach(city => {
           if (city) {
-            // Get the timeline for this city
-            const cityTimeline = getTimeline(city, currentDate);
+            // Get the time for this city at the hovered slot
+            const timeAtSlot = hoveredTimeSlot.dateTime.setZone(city.timezone);
             
-            // Get the time slot at the hovered index
-            const timeSlot = cityTimeline[hoveredTimeIndex];
+            // Format the time based on user preference
+            const timeStr = use24HourFormat 
+              ? timeAtSlot.toFormat('HH:mm')
+              : timeAtSlot.toFormat('h:mm a');
             
-            if (timeSlot) {
-              // Format time according to current format setting
-              let timeString;
-              
-              if (use24HourFormat) {
-                // For 24-hour format, use the time directly from the slot
-                // This is the same approach as the AM/PM mode but formatted for 24H
-                const hourParts = timeSlot.time.split('\n')[0].trim();
-                
-                // Convert the hour to 24-hour format
-                let hour = parseInt(hourParts, 10);
-                const isPM = timeSlot.time.includes('PM') && hour < 12;
-                const isAM = timeSlot.time.includes('AM') && hour === 12;
-                
-                if (isPM) hour += 12;
-                if (isAM) hour = 0;
-                
-                // Format with leading zero
-                const hourStr = hour < 10 ? `0${hour}` : `${hour}`;
-                
-                // Add minutes
-                timeString = `${hourStr}:00`;
-                
-                // Handle half-hour timezones
-                if (timeSlot.isHalfHour) {
-                  timeString = `${hourStr}:30`;
-                }
-              } else {
-                // For 12-hour format, use the original time with AM/PM
-                timeString = timeSlot.time.replace('\n', ' ');
-              }
-              
-              copyText += `• ${city.name} (${city.timezoneName}) - ${timeString}\n`;
-            }
+            // Add the city and time to the copy text
+            copyText += `• ${city.name} - ${timeStr} (${city.timezoneName})\n`;
           }
         });
         
         // Copy to clipboard
-        if (copyText) {
-          navigator.clipboard.writeText(copyText.trim())
-            .then(() => {
-              // Show toast notification with copied content
-              setToastMessage(`Copied to clipboard!\n\n${copyText.trim()}`);
-              setShowToast(true);
-              
-              // Hide toast after 4 seconds (longer to allow reading)
-              setTimeout(() => {
-                setShowToast(false);
-              }, 4000);
-            })
-            .catch(err => {
-              console.error('Failed to copy: ', err);
-              setToastMessage('Failed to copy to clipboard');
-              setShowToast(true);
-              
-              setTimeout(() => {
-                setShowToast(false);
-              }, 3000);
-            });
-        }
+        navigator.clipboard.writeText(copyText)
+          .then(() => {
+            // Show the copied content in the toast
+            setToastMessage(`Copied to clipboard!\n\n${copyText}`);
+            setShowToast(true);
+            
+            // Hide toast after 5 seconds (increased from 3 seconds)
+            setTimeout(() => {
+              setShowToast(false);
+            }, 5000);
+          })
+          .catch(err => {
+            console.error('Failed to copy: ', err);
+            setToastMessage('Failed to copy to clipboard');
+            setShowToast(true);
+            
+            setTimeout(() => {
+              setShowToast(false);
+            }, 3000);
+          });
       }
     }
   };
-
-  // Update the useEffect dependency array
+  
+  // Add keyboard event listener for copy
   useEffect(() => {
     document.addEventListener('keydown', handleCopyTimeInfo);
     return () => {
       document.removeEventListener('keydown', handleCopyTimeInfo);
     };
   }, [selectedRows, hoveredTime, hoveredTimeIndex, hoveredTimeSlot, selectedCities, use24HourFormat]);
-
-  // Add this state for dark mode
+  
+  // Add state for dark mode
   const [darkMode, setDarkMode] = useState(() => {
     // Check if user has a preference stored
     const savedPreference = localStorage.getItem('darkMode');
@@ -566,8 +678,8 @@ function App() {
     }
     return savedPreference === 'true';
   });
-
-  // Add this effect to apply dark mode
+  
+  // Apply dark mode
   useEffect(() => {
     // Apply dark mode class to body
     if (darkMode) {
@@ -579,7 +691,7 @@ function App() {
     // Save preference to localStorage
     localStorage.setItem('darkMode', darkMode);
   }, [darkMode]);
-
+  
   // Add state to track if tips are visible
   const [showTips, setShowTips] = useState(() => {
     // Check localStorage for user preference
@@ -587,42 +699,121 @@ function App() {
     // If user has explicitly hidden tips, don't show them
     return hideTips !== 'true';
   });
-
+  
   // Function to handle closing tips
   const handleCloseTips = () => {
     setShowTips(false);
     // Save preference to localStorage
     localStorage.setItem('hideTips', 'true');
   };
-
+  
   // Add a function to show tips
   const handleShowTips = () => {
     setShowTips(true);
     // Remove the "hidden" preference from localStorage
     localStorage.removeItem('hideTips');
   };
-
-  // Add state for home timezone
-  const [homeTimezone, setHomeTimezone] = useState(() => {
-    // Load home timezone from localStorage or default to null
-    const savedHomeTimezone = localStorage.getItem('homeTimezone');
-    return savedHomeTimezone || null;
-  });
-
-  // Save home timezone to localStorage when it changes
+  
+  // Add state for keyboard navigation
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  
+  // Reset highlighted index when search term changes
   useEffect(() => {
-    if (homeTimezone) {
-      localStorage.setItem('homeTimezone', homeTimezone);
-    } else {
-      localStorage.removeItem('homeTimezone');
+    setHighlightedIndex(0);
+  }, [searchTerm]);
+  
+  // Handle keyboard navigation in the dropdown
+  const handleSearchKeyDown = (e) => {
+    if (!isDropdownOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setIsDropdownOpen(true);
+      }
+      return;
     }
-  }, [homeTimezone]);
-
-  // Function to set home timezone
-  const setHomeCity = (cityName) => {
-    setHomeTimezone(cityName);
+    
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault(); // Prevent scrolling the page
+        setHighlightedIndex(prev => 
+          prev < filteredCities.length - 1 ? prev + 1 : prev
+        );
+        break;
+        
+      case 'ArrowUp':
+        e.preventDefault(); // Prevent scrolling the page
+        setHighlightedIndex(prev => 
+          prev > 0 ? prev - 1 : 0
+        );
+        break;
+        
+      case 'Enter':
+        e.preventDefault(); // Prevent form submission
+        if (filteredCities.length > 0) {
+          const selectedCity = filteredCities[highlightedIndex];
+          addCity(selectedCity);
+          setSearchTerm('');
+          setIsDropdownOpen(false);
+          setHighlightedIndex(0); // Reset the highlighted index
+          
+          // Force the input to blur to reset focus state
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+        }
+        break;
+        
+      case 'Escape':
+        setIsDropdownOpen(false);
+        setHighlightedIndex(0); // Reset the highlighted index
+        
+        // Force the input to blur
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+        break;
+        
+      default:
+        break;
+    }
   };
-
+  
+  // Scroll the highlighted option into view
+  useEffect(() => {
+    if (isDropdownOpen && filteredCities.length > 0) {
+      const highlightedElement = document.getElementById(`city-option-${highlightedIndex}`);
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex, isDropdownOpen, filteredCities.length]);
+  
+  // Add ref for the search dropdown
+  const searchDropdownRef = useRef(null);
+  
+  // Handle clicks outside the search dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        searchDropdownRef.current && 
+        !searchDropdownRef.current.contains(event.target) &&
+        isDropdownOpen
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+    
+    // Add event listener
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+  
+  // In the App component, find the home city object
+  const homeCity = homeTimezone ? cities.find(c => c.name === homeTimezone) : null;
+  
   return (
     <div className="app">
       <h1>TimeHopper</h1>
@@ -635,28 +826,36 @@ function App() {
       {/* City picker with search and controls on the same line */}
       <div className="city-picker-container">
         <div className="search-controls-row">
-          <div className="search-dropdown">
+          <div className="search-dropdown" ref={searchDropdownRef}>
             <input
               type="text"
               placeholder="Add locations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setIsDropdownOpen(true)}
+              onKeyDown={handleSearchKeyDown}
               className="city-search"
             />
             {isDropdownOpen && (
               <div className="city-dropdown">
                 {filteredCities.length > 0 ? (
-                  filteredCities.map(city => (
+                  filteredCities.map((city, index) => (
                     <div 
                       key={city.name} 
-                      className="city-option"
+                      id={`city-option-${index}`}
+                      className={`city-option ${index === highlightedIndex ? 'highlighted' : ''}`}
                       onClick={() => {
-                        const cityObj = cities.find(c => c.name === city.name);
-                        addCity(cityObj);
-                        setSearchTerm('');
-                        setIsDropdownOpen(false);
+                        addCity(city);
+                        // No need to set these here as they're now handled in the addCity function
+                        // setSearchTerm('');
+                        // setIsDropdownOpen(false);
+                        
+                        // Force the input to blur
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
                       }}
+                      onMouseEnter={() => setHighlightedIndex(index)}
                     >
                       {city.name} ({city.timezoneName})
                     </div>
@@ -744,12 +943,14 @@ function App() {
               setHoveredTimeSlot={setHoveredTimeSlot}
               getTimeForCity={getTimeForCity}
               getTimeline={getTimeline}
-              currentDate={currentDate}
+              referenceDateTime={referenceDateTime}
               use24HourFormat={use24HourFormat}
               isSelected={selectedRows.includes(index)}
               onRowSelect={handleRowSelection}
               isHomeTimezone={city.name === homeTimezone}
               setHomeCity={setHomeCity}
+              currentTime={currentTime}
+              homeCity={homeCity}
             />
           ))}
         </div>
