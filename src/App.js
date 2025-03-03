@@ -189,7 +189,7 @@ const DraggableTimezoneRow = ({
         {getTimeline(city, referenceDateTime).map((slot, i) => (
           <div 
             key={i} 
-            className={`time-slot ${slot.timeOfDay} ${hoveredTimeIndex === i ? 'highlight' : ''} ${slot.isHalfHour ? 'half-hour' : ''}`}
+            className={`time-slot ${slot.timeOfDay} ${hoveredTimeIndex === i ? 'highlight' : ''} ${slot.isHalfHour ? 'half-hour' : ''} ${slot.isCurrentHour ? 'current-hour' : ''}`}
             data-is-midnight={slot.isMidnight ? "true" : "false"}
             onMouseEnter={() => {
               setHoveredTime(slot.hour);
@@ -501,12 +501,24 @@ function App() {
     }
   };
   
-  // Update the getTimeline function to display non-hour offset times in 24H mode with hour and minutes on separate lines
+  // Add a function to determine if a time slot represents the current time
+  const isCurrentTimeSlot = (slotDateTime, currentTime) => {
+    // Get the current hour in the timezone
+    const currentHour = currentTime.setZone(slotDateTime.zoneName).hour;
+    
+    // Check if this slot's hour matches the current hour
+    return slotDateTime.hour === currentHour;
+  };
+  
+  // Update the getTimeline function to mark the current time slot
   const getTimeline = (city, referenceDateTime) => {
     const times = [];
     
     // Check if timezone has a non-hour offset
     const hasNonHourOffset = cityTime => cityTime.offset % 60 !== 0;
+    
+    // Get current time in this timezone for highlighting
+    const cityCurrentTime = currentTime.setZone(city.timezone);
     
     // For each hour of the day (0-23)
     for (let i = 0; i < 24; i++) {
@@ -520,6 +532,9 @@ function App() {
       const localHour = localSlotTime.hour;
       const localMinute = localSlotTime.minute;
       const isNonHourOffset = hasNonHourOffset(localSlotTime);
+      
+      // Check if this is the current hour
+      const isCurrentHour = localHour === cityCurrentTime.hour;
       
       // Format the time string based on user preference
       let timeStr;
@@ -575,6 +590,7 @@ function App() {
         timeOfDay: timeOfDay,
         isHalfHour: isNonHourOffset,
         isMidnight: localHour === 0 && localMinute === 0,
+        isCurrentHour: isCurrentHour,
         dateTime: localSlotTime
       });
     }
