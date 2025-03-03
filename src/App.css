@@ -794,3 +794,48 @@ body.dark-mode .offset-badge {
   display: inline-flex;
   align-items: center;
 }
+
+/* Current hour highlight */
+.time-slot.current-hour {
+  position: relative;
+  border: 2px solid #4caf50;
+  border-radius: 5px;
+  z-index: 1;
+}
+
+.time-slot.current-hour::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 5px;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+  z-index: -1;
+}
+
+body.dark-mode .time-slot.current-hour {
+  border-color: #81c784;
+}
+
+body.dark-mode .time-slot.current-hour::after {
+  box-shadow: 0 0 8px rgba(129, 199, 132, 0.5);
+}
+
+/* Ensure current hour highlight doesn't interfere with hover highlight */
+.time-slot.current-hour.highlight {
+  border-color: #2196f3;
+}
+
+.time-slot.current-hour.highlight::after {
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+}
+
+body.dark-mode .time-slot.current-hour.highlight {
+  border-color: #64b5f6;
+}
+
+body.dark-mode .time-slot.current-hour.highlight::after {
+  box-shadow: 0 0 8px rgba(100, 181, 246, 0.5);
+}
