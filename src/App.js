@@ -29,7 +29,8 @@ const DraggableTimezoneRow = ({
   onRowSelect, 
   isHomeTimezone, 
   setHomeCity,
-  currentTime
+  currentTime,
+  homeCity
 }) => {
   const ref = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -124,6 +125,27 @@ const DraggableTimezoneRow = ({
   // Get the current time in this city's timezone
   const cityDateTime = currentTime.setZone(city.timezone);
   
+  // Calculate offset from home timezone
+  const getOffsetFromHome = () => {
+    if (isHomeTimezone || !homeCity) return null;
+    
+    // Get the current time in both timezones
+    const cityTime = DateTime.now().setZone(city.timezone);
+    const homeTime = DateTime.now().setZone(homeCity.timezone);
+    
+    // Calculate the offset in hours
+    const offsetMinutes = cityTime.offset - homeTime.offset;
+    const offsetHours = offsetMinutes / 60;
+    
+    // Format the offset string
+    const sign = offsetHours >= 0 ? '+' : '';
+    const formattedOffset = offsetHours === 0 ? '±0' : `${sign}${offsetHours}`;
+    
+    return formattedOffset;
+  };
+  
+  const offsetFromHome = getOffsetFromHome();
+  
   return (
     <div 
       ref={ref}
@@ -139,7 +161,12 @@ const DraggableTimezoneRow = ({
         <div className="city-header">
           <h2>
             {city.name} 
-            <span className="timezone-badge">{city.timezoneName}</span>
+            <span className="timezone-badge">
+              {city.timezoneName}
+            </span>
+            {offsetFromHome && (
+              <span className="offset-badge">{offsetFromHome}</span>
+            )}
             {isHomeTimezone && (
               <span className="home-indicator">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -291,9 +318,17 @@ function App() {
         return savedHomeTimezone;
       }
     }
-    // Default to the first selected city, or null if no cities are selected
+    // Default to the first selected city if no home timezone is set
     return selectedCities.length > 0 ? selectedCities[0].name : null;
   });
+  
+  // Add an effect to set the first city as home if no home is set
+  useEffect(() => {
+    // If no home timezone is set but we have cities, set the first one as home
+    if (!homeTimezone && selectedCities.length > 0) {
+      setHomeCity(selectedCities[0].name);
+    }
+  }, [homeTimezone, selectedCities]);
   
   // Reference DateTime - midnight in the home timezone
   const [referenceDateTime, setReferenceDateTime] = useState(() => {
@@ -359,9 +394,20 @@ function App() {
     }
   }, [homeTimezone]);
   
-  // Function to set home timezone
+  // Update the setHomeCity function to save to localStorage
   const setHomeCity = (cityName) => {
     setHomeTimezone(cityName);
+    if (cityName) {
+      localStorage.setItem('homeTimezone', cityName);
+    } else {
+      localStorage.removeItem('homeTimezone');
+      
+      // If unsetting the home city and we have cities, set the first one as home
+      if (selectedCities.length > 0) {
+        setHomeTimezone(selectedCities[0].name);
+        localStorage.setItem('homeTimezone', selectedCities[0].name);
+      }
+    }
   };
   
   // Filter cities based on search term
@@ -752,6 +798,9 @@ function App() {
     };
   }, [isDropdownOpen]);
   
+  // In the App component, find the home city object
+  const homeCity = homeTimezone ? cities.find(c => c.name === homeTimezone) : null;
+  
   return (
     <div className="app">
       <h1>TimeHopper</h1>
@@ -888,6 +937,7 @@ function App() {
               isHomeTimezone={city.name === homeTimezone}
               setHomeCity={setHomeCity}
               currentTime={currentTime}
+              homeCity={homeCity}
             />
           ))}
         </div>
