@@ -728,3 +728,12 @@ body.dark-mode .context-menu-item:hover {
   font-weight: 400; /* Make the day slightly bolder */
   margin-top: 3px; /* Add vertical gap between month and day */
 }
+
+/* Add styling for highlighted city option */
+.city-option.highlighted {
+  background-color: #f0f0f0;
+}
+
+body.dark-mode .city-option.highlighted {
+  background-color: #444;
+}

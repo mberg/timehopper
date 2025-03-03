@@ -645,6 +645,91 @@ function App() {
     localStorage.removeItem('hideTips');
   };
   
+  // Add state for keyboard navigation
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  
+  // Reset highlighted index when search term changes
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [searchTerm]);
+  
+  // Handle keyboard navigation in the dropdown
+  const handleSearchKeyDown = (e) => {
+    if (!isDropdownOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setIsDropdownOpen(true);
+      }
+      return;
+    }
+    
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault(); // Prevent scrolling the page
+        setHighlightedIndex(prev => 
+          prev < filteredCities.length - 1 ? prev + 1 : prev
+        );
+        break;
+        
+      case 'ArrowUp':
+        e.preventDefault(); // Prevent scrolling the page
+        setHighlightedIndex(prev => 
+          prev > 0 ? prev - 1 : 0
+        );
+        break;
+        
+      case 'Enter':
+        e.preventDefault(); // Prevent form submission
+        if (filteredCities.length > 0) {
+          const selectedCity = filteredCities[highlightedIndex];
+          addCity(selectedCity);
+          setSearchTerm('');
+          setIsDropdownOpen(false);
+        }
+        break;
+        
+      case 'Escape':
+        setIsDropdownOpen(false);
+        break;
+        
+      default:
+        break;
+    }
+  };
+  
+  // Scroll the highlighted option into view
+  useEffect(() => {
+    if (isDropdownOpen && filteredCities.length > 0) {
+      const highlightedElement = document.getElementById(`city-option-${highlightedIndex}`);
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex, isDropdownOpen, filteredCities.length]);
+  
+  // Add ref for the search dropdown
+  const searchDropdownRef = useRef(null);
+  
+  // Handle clicks outside the search dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        searchDropdownRef.current && 
+        !searchDropdownRef.current.contains(event.target) &&
+        isDropdownOpen
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+    
+    // Add event listener
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+  
   return (
     <div className="app">
       <h1>TimeHopper</h1>
@@ -657,28 +742,30 @@ function App() {
       {/* City picker with search and controls on the same line */}
       <div className="city-picker-container">
         <div className="search-controls-row">
-          <div className="search-dropdown">
+          <div className="search-dropdown" ref={searchDropdownRef}>
             <input
               type="text"
               placeholder="Add locations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setIsDropdownOpen(true)}
+              onKeyDown={handleSearchKeyDown}
               className="city-search"
             />
             {isDropdownOpen && (
               <div className="city-dropdown">
                 {filteredCities.length > 0 ? (
-                  filteredCities.map(city => (
+                  filteredCities.map((city, index) => (
                     <div 
                       key={city.name} 
-                      className="city-option"
+                      id={`city-option-${index}`}
+                      className={`city-option ${index === highlightedIndex ? 'highlighted' : ''}`}
                       onClick={() => {
-                        const cityObj = cities.find(c => c.name === city.name);
-                        addCity(cityObj);
+                        addCity(city);
                         setSearchTerm('');
                         setIsDropdownOpen(false);
                       }}
+                      onMouseEnter={() => setHighlightedIndex(index)}
                     >
                       {city.name} ({city.timezoneName})
                     </div>
