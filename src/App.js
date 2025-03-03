@@ -547,13 +547,14 @@ function App() {
         // Copy to clipboard
         navigator.clipboard.writeText(copyText)
           .then(() => {
-            setToastMessage('Copied to clipboard!');
+            // Show the copied content in the toast
+            setToastMessage(`Copied to clipboard!\n\n${copyText}`);
             setShowToast(true);
             
-            // Hide toast after 3 seconds
+            // Hide toast after 5 seconds (increased from 3 seconds)
             setTimeout(() => {
               setShowToast(false);
-            }, 3000);
+            }, 5000);
           })
           .catch(err => {
             console.error('Failed to copy: ', err);
