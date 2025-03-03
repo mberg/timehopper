@@ -28,7 +28,8 @@ const DraggableTimezoneRow = ({
   isSelected, 
   onRowSelect, 
   isHomeTimezone, 
-  setHomeCity 
+  setHomeCity,
+  currentTime
 }) => {
   const ref = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -121,7 +122,7 @@ const DraggableTimezoneRow = ({
   }, [showContextMenu]);
 
   // Get the current time in this city's timezone
-  const cityDateTime = DateTime.fromISO(referenceDateTime.toISO(), { zone: city.timezone });
+  const cityDateTime = currentTime.setZone(city.timezone);
   
   return (
     <div 
@@ -380,17 +381,27 @@ function App() {
     setSelectedCities(updatedCities);
   };
   
-  // Get formatted time for a city
-  const getTimeForCity = (city) => {
-    // Create a DateTime object in the city's timezone based on the reference time
-    const cityTime = referenceDateTime.setZone(city.timezone);
+  // Add state for current time
+  const [currentTime, setCurrentTime] = useState(DateTime.now());
+
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(DateTime.now());
+    }, 1000);
     
-    // Format the time based on user preference
-    return cityTime.toLocaleString({
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: !use24HourFormat
-    });
+    return () => clearInterval(timer);
+  }, []);
+
+  // Function to get formatted current time for a city
+  const getTimeForCity = (city) => {
+    const cityTime = currentTime.setZone(city.timezone);
+    
+    if (use24HourFormat) {
+      return cityTime.toFormat('HH:mm:ss');
+    } else {
+      return cityTime.toFormat('h:mm:ss a');
+    }
   };
   
   // Generate timeline for a city
@@ -414,25 +425,27 @@ function App() {
       // Format the time string based on user preference
       let timeStr;
       
-      if (use24HourFormat) {
-        // 24-hour format: "01" to "24" (no ":00")
-        timeStr = localSlotTime.toFormat('HH');
+      // Special case for midnight (when hour is 0) - show date instead for both formats
+      if (localHour === 0) {
+        // Format as "Mar\n3" (month and day)
+        const month = localSlotTime.toFormat('MMM');
+        const day = localSlotTime.toFormat('d');
         
-        // Add minutes if there's a half-hour offset
-        if (hasHalfHourOffset) {
-          timeStr = localSlotTime.toFormat('HH:mm');
-        }
+        timeStr = `${month}\n${day}`;
       } else {
-        // 12-hour format: Single digit with AM/PM
-        // Special case for midnight (when hour is 0) - show date instead
-        if (localHour === 0) {
-          // Format as "Mar\n3" (month and day)
-          const month = localSlotTime.toFormat('MMM');
-          const day = localSlotTime.toFormat('d');
+        if (use24HourFormat) {
+          // 24-hour format: "01" to "23" (no ":00")
+          timeStr = localSlotTime.toFormat('HH');
           
-          timeStr = `${month}\n${day}`;
+          // Add minutes if there's a half-hour offset
+          if (hasHalfHourOffset) {
+            timeStr = localSlotTime.toFormat('HH:mm');
+          }
+          
+          // Add a newline for consistent layout
+          timeStr = `${timeStr}\n`;
         } else {
-          // Regular hour formatting (1-12 without ":00")
+          // 12-hour format: Single digit with AM/PM
           const hour12 = localHour % 12 || 12; // Convert 0 to 12
           const period = localHour >= 12 ? 'PM' : 'AM';
           
@@ -470,7 +483,7 @@ function App() {
         hour: i, 
         timeOfDay: timeOfDay,
         isHalfHour: hasHalfHourOffset,
-        isMidnight: localHour === 0 && !use24HourFormat,
+        isMidnight: localHour === 0, // Now for both formats
         dateTime: localSlotTime
       });
     }
@@ -736,6 +749,7 @@ function App() {
               onRowSelect={handleRowSelection}
               isHomeTimezone={city.name === homeTimezone}
               setHomeCity={setHomeCity}
+              currentTime={currentTime}
             />
           ))}
         </div>
