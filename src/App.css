@@ -244,12 +244,41 @@
   font-size: 14px;
   font-weight: bold;
   line-height: 1.1;
+  margin: 0; /* Remove any default margins */
 }
 
 .time-slot .period {
   font-size: 8px;
   line-height: 1.1;
   min-height: 11px; /* Add minimum height to maintain spacing even when empty */
+  margin: 0; /* Remove any default margins */
+}
+
+/* Special styling for 24H mode to center single line content */
+.time-slot:not([data-is-midnight="true"]) .hour + .period:empty {
+  display: none; /* Hide empty period in 24H mode */
+}
+
+/* Center single line content in 24H mode */
+.time-slot:not([data-is-midnight="true"]) .hour:only-child {
+  margin: auto 0; /* Center vertically when it's the only element */
+}
+
+/* Adjust midnight display for better alignment */
+.time-slot[data-is-midnight="true"] {
+  justify-content: center; /* Ensure centered alignment */
+}
+
+.time-slot[data-is-midnight="true"] .hour {
+  font-size: 11px; /* Smaller font for month */
+  line-height: 1.1;
+  margin-bottom: 2px; /* Add space between month and day */
+}
+
+.time-slot[data-is-midnight="true"] .period {
+  font-size: 13px; /* Larger font for day */
+  font-weight: 400; /* Make the day slightly bolder */
+  margin-top: 1px; /* Reduced from 3px for better overall centering */
 }
 
 /* Time of day coloring - refined day/night cycle */
