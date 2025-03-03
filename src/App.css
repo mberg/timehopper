@@ -317,7 +317,7 @@
 }
 
 .time-slot.half-hour .hour {
-  font-size: 12px;  /* 2px smaller than the normal 13px */
+  font-size: 13px;  /* 2px smaller than the normal 13px */
 }
 
 .timezone-row.selected {

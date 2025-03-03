@@ -631,7 +631,7 @@ function App() {
               : timeAtSlot.toFormat('h:mm a');
             
             // Add the city and time to the copy text
-            copyText += `${city.name}: ${timeStr}\n`;
+            copyText += `• ${city.name} - ${timeStr} (${city.timezoneName})\n`;
           }
         });
         
