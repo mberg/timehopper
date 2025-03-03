@@ -380,8 +380,18 @@ function App() {
   
   // Add a city to the selected list
   const addCity = (city) => {
+    // Check if city is already in the list
     if (!selectedCities.some(c => c.name === city.name)) {
-      setSelectedCities([...selectedCities, city]);
+      const newSelectedCities = [...selectedCities, city];
+      setSelectedCities(newSelectedCities);
+      
+      // Save to localStorage
+      localStorage.setItem('selectedCities', JSON.stringify(newSelectedCities.map(c => c.name)));
+      
+      // Reset search state
+      setSearchTerm('');
+      setIsDropdownOpen(false);
+      setHighlightedIndex(0);
     }
   };
   
@@ -684,11 +694,23 @@ function App() {
           addCity(selectedCity);
           setSearchTerm('');
           setIsDropdownOpen(false);
+          setHighlightedIndex(0); // Reset the highlighted index
+          
+          // Force the input to blur to reset focus state
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
         }
         break;
         
       case 'Escape':
         setIsDropdownOpen(false);
+        setHighlightedIndex(0); // Reset the highlighted index
+        
+        // Force the input to blur
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
         break;
         
       default:
@@ -762,8 +784,14 @@ function App() {
                       className={`city-option ${index === highlightedIndex ? 'highlighted' : ''}`}
                       onClick={() => {
                         addCity(city);
-                        setSearchTerm('');
-                        setIsDropdownOpen(false);
+                        // No need to set these here as they're now handled in the addCity function
+                        // setSearchTerm('');
+                        // setIsDropdownOpen(false);
+                        
+                        // Force the input to blur
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
                       }}
                       onMouseEnter={() => setHighlightedIndex(index)}
                     >
