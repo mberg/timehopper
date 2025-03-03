@@ -253,9 +253,9 @@ function App() {
     // Default cities if nothing is saved or if there was an error
     return [
       cities.find(c => c.name === 'New York, NY') || cities[0],
-      cities.find(c => c.name === 'Nairobi, KE') || cities[1],
-      cities.find(c => c.name === 'Dakar, SN') || cities[2],
-      cities.find(c => c.name === 'Jakarta, ID') || cities[3],
+      cities.find(c => c.name === 'Nairobi, Kenya') || cities[1],
+      cities.find(c => c.name === 'Dakar, Senegal') || cities[2],
+      cities.find(c => c.name === 'Jakarta, Indonesia') || cities[3],
       cities.find(c => c.name === 'San Francisco, CA') || cities[4]
     ].filter(Boolean); // Filter out any undefined cities
   });
