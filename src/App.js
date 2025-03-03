@@ -471,23 +471,42 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Function to get formatted current time for a city
+  // Update the getTimeForCity function to match the timeline format for non-hour offsets
   const getTimeForCity = (city) => {
+    // Get the current time in this city's timezone
     const cityTime = currentTime.setZone(city.timezone);
     
+    // Check if the timezone has a non-hour offset (like India's +5:30)
+    const hasNonHourOffset = cityTime.offset % 60 !== 0;
+    
+    // Format the time based on user preference and offset
     if (use24HourFormat) {
-      return cityTime.toFormat('HH:mm:ss');
+      if (hasNonHourOffset) {
+        // For 24-hour format with non-hour offsets, show hour and minutes separately
+        return `${cityTime.toFormat('HH')}:${cityTime.toFormat('mm')}`;
+      } else if (cityTime.minute !== 0) {
+        // For regular timezones with non-zero minutes
+        return cityTime.toFormat('HH:mm');
+      } else {
+        // For regular timezones with zero minutes
+        return cityTime.toFormat('HH');
+      }
     } else {
-      return cityTime.toFormat('h:mm:ss a');
+      // For 12-hour format, always show minutes for non-hour offsets
+      if (hasNonHourOffset || cityTime.minute !== 0) {
+        return cityTime.toFormat('h:mm a');
+      } else {
+        return cityTime.toFormat('h a');
+      }
     }
   };
   
-  // Generate timeline for a city
+  // Update the getTimeline function to display non-hour offset times in 24H mode with hour and minutes on separate lines
   const getTimeline = (city, referenceDateTime) => {
     const times = [];
     
-    // Check if timezone has a half-hour offset
-    const hasHalfHourOffset = city.timezone.includes('30') || city.timezone.includes('45');
+    // Check if timezone has a non-hour offset
+    const hasNonHourOffset = cityTime => cityTime.offset % 60 !== 0;
     
     // For each hour of the day (0-23)
     for (let i = 0; i < 24; i++) {
@@ -497,14 +516,16 @@ function App() {
       // Convert to the city's timezone
       const localSlotTime = slotDateTime.setZone(city.timezone);
       
-      // Get the hour in the city's timezone
+      // Get the hour and minute in the city's timezone
       const localHour = localSlotTime.hour;
+      const localMinute = localSlotTime.minute;
+      const isNonHourOffset = hasNonHourOffset(localSlotTime);
       
       // Format the time string based on user preference
       let timeStr;
       
-      // Special case for midnight (when hour is 0) - show date instead for both formats
-      if (localHour === 0) {
+      // Special case for midnight (when hour is 0) - show date instead
+      if (localHour === 0 && localMinute === 0) {
         // Format as "Mar\n3" (month and day)
         const month = localSlotTime.toFormat('MMM');
         const day = localSlotTime.toFormat('d');
@@ -512,23 +533,23 @@ function App() {
         timeStr = `${month}\n${day}`;
       } else {
         if (use24HourFormat) {
-          // 24-hour format: "01" to "23" (no ":00")
-          timeStr = localSlotTime.toFormat('HH');
-          
-          // Add minutes if there's a half-hour offset
-          if (hasHalfHourOffset) {
-            timeStr = localSlotTime.toFormat('HH:mm');
+          // 24-hour format
+          if (isNonHourOffset) {
+            // For non-hour offsets in 24H mode, show hour and minutes on separate lines
+            timeStr = `${localSlotTime.toFormat('HH')}\n${localSlotTime.toFormat('mm')}`;
+          } else if (localMinute !== 0) {
+            // For regular timezones with non-zero minutes
+            timeStr = localSlotTime.toFormat('HH:mm\n');
+          } else {
+            // For regular timezones with zero minutes
+            timeStr = localSlotTime.toFormat('HH\n');
           }
-          
-          // Add a newline for consistent layout
-          timeStr = `${timeStr}\n`;
         } else {
-          // 12-hour format: Single digit with AM/PM
+          // 12-hour format
           const hour12 = localHour % 12 || 12; // Convert 0 to 12
           const period = localHour >= 12 ? 'PM' : 'AM';
           
-          // For half-hour timezones, include the minutes
-          if (hasHalfHourOffset) {
+          if (isNonHourOffset || localMinute !== 0) {
             timeStr = `${hour12}:${localSlotTime.toFormat('mm')}\n${period}`;
           } else {
             timeStr = `${hour12}\n${period}`;
@@ -538,20 +559,12 @@ function App() {
       
       // Determine time of day for coloring
       let timeOfDay;
-      if (localHour >= 0 && localHour < 4) {
+      if (localHour >= 0 && localHour < 7) {
         timeOfDay = 'night';
-      } else if (localHour >= 4 && localHour < 7) {
-        timeOfDay = 'night';
-      } else if (localHour >= 7 && localHour < 10) {
+      } else if (localHour >= 7 && localHour < 12) {
         timeOfDay = 'morning';
-      } else if (localHour >= 10 && localHour < 14) {
-        timeOfDay = 'morning';
-      } else if (localHour >= 14 && localHour < 17) {
+      } else if (localHour >= 12 && localHour < 18) {
         timeOfDay = 'afternoon';
-      } else if (localHour >= 17 && localHour < 20) {
-        timeOfDay = 'afternoon';
-      } else if (localHour >= 20 && localHour < 22) {
-        timeOfDay = 'evening';
       } else {
         timeOfDay = 'evening';
       }
@@ -560,8 +573,8 @@ function App() {
         time: timeStr, 
         hour: i, 
         timeOfDay: timeOfDay,
-        isHalfHour: hasHalfHourOffset,
-        isMidnight: localHour === 0, // Now for both formats
+        isHalfHour: isNonHourOffset,
+        isMidnight: localHour === 0 && localMinute === 0,
         dateTime: localSlotTime
       });
     }
