@@ -250,7 +250,7 @@
 }
 
 .time-slot .period {
-  font-size: 8px;
+  font-size: 9px;
   line-height: 1.1;
   min-height: 11px; /* Add minimum height to maintain spacing even when empty */
   margin: 0; /* Remove any default margins */
