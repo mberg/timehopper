@@ -176,7 +176,7 @@ const DraggableTimezoneRow = ({
             }}
           >
             <div className="hour">{slot.time.split('\n')[0]}</div>
-            {!use24HourFormat && <div className="period">{slot.time.split('\n')[1]}</div>}
+            <div className="period">{slot.time.split('\n')[1] || ''}</div>
           </div>
         ))}
       </div>
