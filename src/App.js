@@ -237,20 +237,27 @@ function App() {
       try {
         // Parse the saved city names and find the matching city objects
         const cityNames = JSON.parse(savedCities);
-        return cityNames.map(name => cities.find(c => c.name === name)).filter(Boolean);
+        const loadedCities = cityNames
+          .map(name => cities.find(c => c.name === name))
+          .filter(city => city !== undefined); // Filter out any undefined cities
+        
+        // If we have valid cities, return them
+        if (loadedCities.length > 0) {
+          return loadedCities;
+        }
       } catch (e) {
         console.error('Error loading saved cities', e);
       }
     }
     
-    // Default cities if nothing is saved
+    // Default cities if nothing is saved or if there was an error
     return [
-      cities.find(c => c.name === 'Burlington'),
-      cities.find(c => c.name === 'Nairobi'),
-      cities.find(c => c.name === 'Dakar'),
-      cities.find(c => c.name === 'Jakarta'),
-      cities.find(c => c.name === 'San Francisco')
-    ];
+      cities.find(c => c.name === 'New York, NY') || cities[0],
+      cities.find(c => c.name === 'Nairobi, KE') || cities[1],
+      cities.find(c => c.name === 'Dakar, SN') || cities[2],
+      cities.find(c => c.name === 'Jakarta, ID') || cities[3],
+      cities.find(c => c.name === 'San Francisco, CA') || cities[4]
+    ].filter(Boolean); // Filter out any undefined cities
   });
   
   // State for search functionality
@@ -276,9 +283,16 @@ function App() {
   
   // Add state for home timezone
   const [homeTimezone, setHomeTimezone] = useState(() => {
-    // Load home timezone from localStorage or default to null
     const savedHomeTimezone = localStorage.getItem('homeTimezone');
-    return savedHomeTimezone || null;
+    if (savedHomeTimezone) {
+      // Check if the saved home timezone exists in our cities list
+      const exists = cities.some(city => city.name === savedHomeTimezone);
+      if (exists) {
+        return savedHomeTimezone;
+      }
+    }
+    // Default to the first selected city, or null if no cities are selected
+    return selectedCities.length > 0 ? selectedCities[0].name : null;
   });
   
   // Reference DateTime - midnight in the home timezone
@@ -351,10 +365,18 @@ function App() {
   };
   
   // Filter cities based on search term
-  const filteredCities = cities.filter(city => 
-    !selectedCities.some(c => c.name === city.name) && 
-    city.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCities = cities.filter(city => {
+    // Check if the city name includes the search term (case insensitive)
+    const matchesSearch = city.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Check if the city is already selected
+    const isAlreadySelected = selectedCities.some(selectedCity => 
+      selectedCity && selectedCity.name === city.name
+    );
+    
+    // Only include cities that match the search and aren't already selected
+    return matchesSearch && !isAlreadySelected;
+  });
   
   // Add a city to the selected list
   const addCity = (city) => {
