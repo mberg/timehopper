@@ -924,6 +924,42 @@ function App() {
           </div>
           
           <div className="app-controls">
+            <div className="date-picker">
+              <div className="date-navigation">
+                <button 
+                  className="date-nav-button" 
+                  onClick={() => changeDate(-1)}
+                  aria-label="Previous day"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                
+                <div className="date-display">
+                  <button 
+                    className="today-button" 
+                    onClick={goToToday}
+                  >
+                    Today
+                  </button>
+                  <span className="selected-date">
+                    {formatSelectedDate()}
+                  </span>
+                </div>
+                
+                <button 
+                  className="date-nav-button" 
+                  onClick={() => changeDate(1)}
+                  aria-label="Next day"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
             <button 
               className="help-button" 
               onClick={handleShowTips}
@@ -980,43 +1016,6 @@ function App() {
               </label>
             </div>
           </div>
-        </div>
-      </div>
-      
-      {/* Date picker */}
-      <div className="date-picker">
-        <div className="date-navigation">
-          <button 
-            className="date-nav-button" 
-            onClick={() => changeDate(-1)}
-            aria-label="Previous day"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
-          
-          <div className="date-display">
-            <button 
-              className="today-button" 
-              onClick={goToToday}
-            >
-              Today
-            </button>
-            <span className="selected-date">
-              {formatSelectedDate()}
-            </span>
-          </div>
-          
-          <button 
-            className="date-nav-button" 
-            onClick={() => changeDate(1)}
-            aria-label="Next day"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
         </div>
       </div>
       
