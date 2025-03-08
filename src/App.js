@@ -735,18 +735,9 @@ function App() {
     return hideTips !== 'true';
   });
   
-  // Function to handle closing tips
-  const handleCloseTips = () => {
-    setShowTips(false);
-    // Save preference to localStorage
-    localStorage.setItem('hideTips', 'true');
-  };
-  
-  // Add a function to show tips
+  // Update the handleShowTips function to toggle the tips
   const handleShowTips = () => {
-    setShowTips(true);
-    // Remove the "hidden" preference from localStorage
-    localStorage.removeItem('hideTips');
+    setShowTips(prevShowTips => !prevShowTips);
   };
   
   // Add state for keyboard navigation
@@ -1104,7 +1095,7 @@ function App() {
             <h3>Tips</h3>
             <button 
               className="close-tips-btn" 
-              onClick={handleCloseTips}
+              onClick={handleShowTips}
               aria-label="Close tips"
             >
               ×
