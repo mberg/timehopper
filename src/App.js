@@ -830,6 +830,46 @@ function App() {
   // In the App component, find the home city object
   const homeCity = homeTimezone ? cities.find(c => c.name === homeTimezone) : null;
   
+  // Add this near the top of the App component, with the other state variables
+  const [selectedDate, setSelectedDate] = useState(DateTime.now());
+
+  // Add this function to handle date changes
+  const changeDate = (days) => {
+    setSelectedDate(prev => prev.plus({ days }));
+    // Also update the reference date time to be midnight on the selected date
+    if (homeTimezone) {
+      const homeCity = cities.find(c => c.name === homeTimezone);
+      if (homeCity) {
+        setReferenceDateTime(selectedDate.plus({ days }).setZone(homeCity.timezone).startOf('day'));
+      }
+    } else {
+      setReferenceDateTime(selectedDate.plus({ days }).startOf('day'));
+    }
+  };
+
+  // Add this function to format the date for display
+  const formatSelectedDate = () => {
+    return selectedDate.toLocaleString({ 
+      month: 'short', 
+      day: 'numeric',
+      weekday: 'short'
+    });
+  };
+
+  // Add this function to reset to today
+  const goToToday = () => {
+    setSelectedDate(DateTime.now());
+    // Update reference date time to be midnight today
+    if (homeTimezone) {
+      const homeCity = cities.find(c => c.name === homeTimezone);
+      if (homeCity) {
+        setReferenceDateTime(DateTime.now().setZone(homeCity.timezone).startOf('day'));
+      }
+    } else {
+      setReferenceDateTime(DateTime.now().startOf('day'));
+    }
+  };
+  
   return (
     <div className="app">
       <h1>TimeHopper</h1>
@@ -940,6 +980,43 @@ function App() {
               </label>
             </div>
           </div>
+        </div>
+      </div>
+      
+      {/* Date picker */}
+      <div className="date-picker">
+        <div className="date-navigation">
+          <button 
+            className="date-nav-button" 
+            onClick={() => changeDate(-1)}
+            aria-label="Previous day"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          
+          <div className="date-display">
+            <button 
+              className="today-button" 
+              onClick={goToToday}
+            >
+              Today
+            </button>
+            <span className="selected-date">
+              {formatSelectedDate()}
+            </span>
+          </div>
+          
+          <button 
+            className="date-nav-button" 
+            onClick={() => changeDate(1)}
+            aria-label="Next day"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       </div>
       
