@@ -191,7 +191,7 @@ const DraggableTimezoneRow = ({
         {getTimeline(city, referenceDateTime).map((slot, i) => (
           <div 
             key={i} 
-            className={`time-slot ${slot.timeOfDay} ${hoveredTimeIndex === i ? 'highlight' : ''} ${slot.isHalfHour ? 'half-hour' : ''} ${slot.isCurrentHour ? 'current-hour' : ''}`}
+            className={`time-slot ${slot.timeOfDay} ${hoveredTimeIndex === i ? 'highlight' : ''} ${slot.isHalfHour ? 'half-hour' : ''} ${slot.isCurrentHour ? 'current-hour' : ''} ${slot.isDSTChange ? 'dst-change' : ''}`}
             data-is-midnight={slot.isMidnight ? "true" : "false"}
             onMouseEnter={() => {
               setHoveredTime(slot.hour);
@@ -206,6 +206,7 @@ const DraggableTimezoneRow = ({
           >
             <div className="hour">{slot.time.split('\n')[0]}</div>
             <div className="period">{slot.time.split('\n')[1] || ''}</div>
+            {slot.isDSTChange && <div className="dst-indicator">DST</div>}
           </div>
         ))}
       </div>
@@ -512,7 +513,19 @@ function App() {
     return slotDateTime.hour === currentHour;
   };
   
-  // Update the getTimeline function to mark the current time slot
+  // First, let's add a function to detect daylight savings changes
+  const isDaylightSavingsChange = (city, hour) => {
+    if (hour === 0) return false; // Skip first hour to avoid false positives
+    
+    // Get the DateTime for this hour and the previous hour
+    const hourDateTime = referenceDateTime.plus({ hours: hour }).setZone(city.timezone);
+    const prevHourDateTime = referenceDateTime.plus({ hours: hour - 1 }).setZone(city.timezone);
+    
+    // Check if the DST status changed between these hours
+    return hourDateTime.isInDST !== prevHourDateTime.isInDST;
+  };
+  
+  // Update the getTimeline function to include DST change detection
   const getTimeline = (city, referenceDateTime) => {
     const times = [];
     
@@ -537,6 +550,9 @@ function App() {
       
       // Check if this is the current hour
       const isCurrentHour = localHour === cityCurrentTime.hour;
+      
+      // Check if this hour has a DST change
+      const isDSTChange = isDaylightSavingsChange(city, i);
       
       // Format the time string based on user preference
       let timeStr;
@@ -593,6 +609,7 @@ function App() {
         isHalfHour: isNonHourOffset,
         isMidnight: localHour === 0 && localMinute === 0,
         isCurrentHour: isCurrentHour,
+        isDSTChange: isDSTChange,
         dateTime: localSlotTime
       });
     }
