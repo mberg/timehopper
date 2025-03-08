@@ -4,6 +4,8 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DateTime } from 'luxon';
 import './App.css';
 import cities from './data/cities';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 // Define the type for our drag and drop
 const ItemTypes = {
@@ -870,6 +872,25 @@ function App() {
     }
   };
   
+  // Add this state variable near your other state declarations
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  // Add this function to handle date selection from calendar
+  const handleDateSelect = (date) => {
+    setSelectedDate(DateTime.fromJSDate(date));
+    setShowCalendar(false);
+    
+    // Update reference date time
+    if (homeTimezone) {
+      const homeCity = cities.find(c => c.name === homeTimezone);
+      if (homeCity) {
+        setReferenceDateTime(DateTime.fromJSDate(date).setZone(homeCity.timezone).startOf('day'));
+      }
+    } else {
+      setReferenceDateTime(DateTime.fromJSDate(date).startOf('day'));
+    }
+  };
+
   return (
     <div className="app">
       <h1>TimeHopper</h1>
@@ -943,9 +964,20 @@ function App() {
                   >
                     Today
                   </button>
-                  <span className="selected-date">
+                  <span 
+                    className="selected-date"
+                    onClick={() => setShowCalendar(prev => !prev)}
+                  >
                     {formatSelectedDate()}
                   </span>
+                  {showCalendar && (
+                    <div className="calendar-popup">
+                      <Calendar
+                        onChange={handleDateSelect}
+                        value={selectedDate.toJSDate()}
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 <button 
