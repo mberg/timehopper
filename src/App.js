@@ -660,7 +660,7 @@ function App() {
   
   // Handle copying time information
   const handleCopyTimeInfo = (e) => {
-    // Format timezone data for both clipboard and Gmail
+    // Format timezone data for clipboard, Gmail, and Calendar
     const formatTimeZoneData = () => {
       if (!hoveredTimeSlot || selectedRows.length === 0) return null;
       
@@ -782,6 +782,81 @@ function App() {
             .catch(clipErr => {
               console.error('Failed to copy to clipboard: ', clipErr);
               setToastMessage('Failed to open Gmail and copy to clipboard');
+              setShowToast(true);
+              
+              setTimeout(() => {
+                setShowToast(false);
+              }, 3000);
+            });
+        }
+      }
+    }
+    
+    // Check if Cmd+M (or Ctrl+M) is pressed for Google Calendar event creation
+    if ((e.metaKey || e.ctrlKey) && e.key === 'm') {
+      e.preventDefault(); // Prevent default browser behavior
+      
+      const formattedText = formatTimeZoneData();
+      
+      if (formattedText && hoveredTimeSlot) {
+        // Use the hovered time slot for the event time
+        const eventTime = hoveredTimeSlot.dateTime;
+        
+        // Format the event title
+        const timeStr = eventTime.toFormat('MMM d');
+        const title = `Meeting on ${timeStr}`;
+        
+        // Convert to format required by Google Calendar (YYYYMMDDTHHMMSSZ)
+        const formatToGCalString = (dateTime) => {
+          return dateTime.toUTC().toFormat('yyyyMMdd\'T\'HHmmss\'Z\'');
+        };
+        
+        // Calculate start and end times (default 30 min duration)
+        const startTime = formatToGCalString(eventTime);
+        const endTime = formatToGCalString(eventTime.plus({ minutes: 60 }));
+        
+        // Create the Google Calendar URL
+        const encodedTitle = encodeURIComponent(title);
+        const encodedDetails = encodeURIComponent(formattedText);
+        const calendarUrl = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${encodedTitle}&dates=${startTime}/${endTime}&details=${encodedDetails}&trp=true`;
+        
+        // Check if URL is too long
+        if (calendarUrl.length > 1800) {
+          setToastMessage(`Warning: Calendar event content is very long and may be truncated. Consider selecting fewer timezones.`);
+          setShowToast(true);
+          
+          setTimeout(() => {
+            setShowToast(false);
+          }, 5000);
+        }
+        
+        // Open Google Calendar in a new tab
+        try {
+          window.open(calendarUrl, '_blank');
+          
+          // Show success toast
+          setToastMessage(`Opening Google Calendar to create event!`);
+          setShowToast(true);
+          
+          setTimeout(() => {
+            setShowToast(false);
+          }, 3000);
+        } catch (err) {
+          console.error('Failed to open Google Calendar: ', err);
+          
+          // If opening the window fails, offer to copy the formatted text
+          navigator.clipboard.writeText(formattedText)
+            .then(() => {
+              setToastMessage(`Google Calendar couldn't be opened. Event details copied to clipboard instead.\n\nNote: Your browser may be blocking popups.`);
+              setShowToast(true);
+              
+              setTimeout(() => {
+                setShowToast(false);
+              }, 5000);
+            })
+            .catch(clipErr => {
+              console.error('Failed to copy to clipboard: ', clipErr);
+              setToastMessage('Failed to open Google Calendar and copy to clipboard');
               setShowToast(true);
               
               setTimeout(() => {
@@ -1217,6 +1292,9 @@ function App() {
             </li>
             <li>
               <kbd>⌘</kbd>+<kbd>G</kbd> to share selected timezones via Gmail.
+            </li>
+            <li>
+              <kbd>⌘</kbd>+<kbd>M</kbd> to create a Google Calendar event.
             </li>
             <li>
               Right click to set home timezone.
