@@ -1,8 +1,8 @@
 /* Import Lexend Deca font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 .app {
-  font-family: Arial, sans-serif;
+  font-family: 'Lexend Deca', sans-serif;
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
@@ -58,6 +58,7 @@
   cursor: pointer;
   font-size: 12px;
   transition: all 0.2s ease;
+  font-family: 'Lexend Deca', sans-serif;
 }
 
 .toggle-button.active {
@@ -68,10 +69,12 @@
 
 .city-search {
   padding: 8px;
-  font-size: 16px;
+  font-size: 14px;
   width: 100%;
   border: 1px solid #ccc;
+  font-weight: 400;
   border-radius: 4px;
+  font-family: 'Lexend Deca', sans-serif;
 }
 
 .city-dropdown {
@@ -83,6 +86,8 @@
   border: 1px solid #ccc;
   border-top: none;
   border-radius: 0 0 4px 4px;
+  font-weight: 300;
+  font-family: 'Lexend Deca', sans-serif;
   z-index: 10;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
@@ -181,6 +186,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  font-weight: 500;
 }
 
 .city-header button {
@@ -206,6 +212,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 300;
 }
 
 .close-btn {
@@ -243,11 +250,12 @@
   justify-content: center;
   align-items: center;
   height: 42px; /* Set fixed height to accommodate both formats */
+  font-weight: 400;
 }
 
 .time-slot .hour {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 500;
   line-height: 1.1;
   margin: 0; /* Remove any default margins */
 }
@@ -464,6 +472,7 @@ body.dark-mode .time-slot.evening {
   cursor: pointer;
   font-size: 12px;
   transition: all 0.2s ease;
+  font-family: 'Lexend Deca', sans-serif;
 }
 
 /* Make dark mode toggle even smaller with icon-only buttons */
@@ -638,6 +647,7 @@ body.dark-mode kbd {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: 'Lexend Deca', sans-serif;
 }
 
 .help-button:hover {
@@ -902,6 +912,7 @@ body.dark-mode .date-nav-button:hover {
   font-size: 12px;
   cursor: pointer;
   color: #666;
+  font-family: 'Lexend Deca', sans-serif;
 }
 
 .today-button:hover {
