@@ -901,7 +901,10 @@ function App() {
 
   return (
     <div className="app">
-      <h1>ZoneWise</h1>
+      <h1>
+        <span className="zone">Zone</span>
+        <span className="wise">Wise</span>
+      </h1>
       
       {/* App header without toggles */}
       <div className="app-header">

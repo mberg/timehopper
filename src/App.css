@@ -1,3 +1,6 @@
+/* Import Lexend Deca font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;600&display=swap');
+
 .app {
   font-family: Arial, sans-serif;
   max-width: 1200px;
@@ -838,4 +841,208 @@ body.dark-mode .time-slot.current-hour.highlight {
 
 body.dark-mode .time-slot.current-hour.highlight::after {
   box-shadow: 0 0 8px rgba(100, 181, 246, 0.5);
+}
+
+/* Date picker styling */
+.date-picker {
+  margin: 0;
+}
+
+.date-navigation {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #e0e0e0;
+  border-radius: 16px;
+  padding: 2px;
+  height: 24px;
+}
+
+body.dark-mode .date-navigation {
+  background-color: #444;
+}
+
+.date-nav-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #666;
+  transition: background-color 0.2s;
+}
+
+.date-nav-button:hover {
+  background-color: rgba(0,0,0,0.1);
+}
+
+body.dark-mode .date-nav-button {
+  color: #aaa;
+}
+
+body.dark-mode .date-nav-button:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.date-display {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.today-button {
+  background-color: transparent;
+  border: none;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #666;
+}
+
+.today-button:hover {
+  color: #333;
+}
+
+body.dark-mode .today-button {
+  color: #aaa;
+}
+
+body.dark-mode .today-button:hover {
+  color: #fff;
+}
+
+.selected-date {
+  min-width: 80px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.selected-date:hover {
+  text-decoration: underline;
+}
+
+.date-display {
+  position: relative;
+}
+
+.calendar-popup {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 5px;
+  z-index: 1000;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 10px;
+}
+
+body.dark-mode .calendar-popup {
+  background: #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Customize react-calendar for dark mode */
+body.dark-mode .react-calendar {
+  background-color: #333;
+  color: #e0e0e0;
+  border-color: #555;
+}
+
+body.dark-mode .react-calendar__tile {
+  color: #e0e0e0;
+}
+
+body.dark-mode .react-calendar__tile:enabled:hover,
+body.dark-mode .react-calendar__tile:enabled:focus {
+  background-color: #444;
+}
+
+body.dark-mode .react-calendar__tile--active {
+  background: #1976d2;
+}
+
+body.dark-mode .react-calendar__tile--now {
+  background: #424242;
+}
+
+body.dark-mode .selected-date {
+  color: #e0e0e0;
+}
+
+/* DST change indicator styling */
+.time-slot.dst-change {
+  position: relative;
+  border: 2px solid #f44336;
+  border-radius: 5px;
+  z-index: 1;
+}
+
+.time-slot.dst-change::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 5px;
+  box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
+  z-index: -1;
+}
+
+.dst-indicator {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #f44336;
+  color: white;
+  font-size: 9px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-weight: bold;
+}
+
+body.dark-mode .time-slot.dst-change {
+  border-color: #e57373;
+}
+
+body.dark-mode .time-slot.dst-change::after {
+  box-shadow: 0 0 8px rgba(229, 115, 115, 0.5);
+}
+
+body.dark-mode .dst-indicator {
+  background-color: #e57373;
+}
+
+/* Update the app title styling with split colors */
+.app h1 {
+  font-family: 'Lexend Deca', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  font-size: 28px;
+  margin-bottom: 20px;
+  display: inline-block;
+}
+
+.app h1 .zone {
+  color: #2196f3; /* Color used for 12PM (afternoon) */
+}
+
+.app h1 .wise {
+  color: #0d47a1; /* Color used for 3AM (night) */
+}
+
+body.dark-mode .app h1 .zone {
+  color: #64b5f6; /* Lighter blue for dark mode */
+}
+
+body.dark-mode .app h1 .wise {
+  color: #0d47a1; /* Lighter purple for dark mode */
 }
