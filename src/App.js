@@ -660,40 +660,59 @@ function App() {
   
   // Handle copying time information
   const handleCopyTimeInfo = (e) => {
+    // Format timezone data for both clipboard and Gmail
+    const formatTimeZoneData = () => {
+      if (!hoveredTimeSlot || selectedRows.length === 0) return null;
+      
+      let formattedText = '';
+      
+      // Get the selected cities
+      const citiesToCopy = selectedRows.map(index => selectedCities[index]);
+      
+      // For each selected city, get the time at the hovered slot
+      citiesToCopy.forEach(city => {
+        if (city) {
+          // Get the time for this city at the hovered slot
+          const timeAtSlot = hoveredTimeSlot.dateTime.setZone(city.timezone);
+          
+          // Format the city name in uppercase
+          const cityNameUpper = city.name.toUpperCase();
+          
+          // Format the time with timezone abbreviation
+          const timeStr = use24HourFormat 
+            ? timeAtSlot.toFormat('HH:mm')
+            : timeAtSlot.toFormat('h:mma');
+          
+          // Get timezone abbreviation
+          const tzAbbr = timeAtSlot.toFormat('z');
+          
+          // Format the full date
+          const dateStr = timeAtSlot.toFormat('EEE, MMM d yyyy');
+          
+          // Add the city and time to the formatted text
+          formattedText += `• ${city.name} - ${timeStr} (${city.timezoneName}) - ${dateStr}\n`;
+        }
+      });
+      
+      // Add attribution with double line break
+      formattedText += '\nScheduled with ZoneWise';
+      
+      return formattedText;
+    };
+    
     // Check if Cmd+C (or Ctrl+C) is pressed
     if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
-      // Only proceed if we have a hovered time and selected rows
-      if (hoveredTimeSlot && selectedRows.length > 0) {
-        // Build the text to copy
-        let copyText = '';
-        
-        // Get the selected cities
-        const citiesToCopy = selectedRows.map(index => selectedCities[index]);
-        
-        // For each selected city, get the time at the hovered slot
-        citiesToCopy.forEach(city => {
-          if (city) {
-            // Get the time for this city at the hovered slot
-            const timeAtSlot = hoveredTimeSlot.dateTime.setZone(city.timezone);
-            
-            // Format the time based on user preference
-            const timeStr = use24HourFormat 
-              ? timeAtSlot.toFormat('HH:mm')
-              : timeAtSlot.toFormat('h:mm a');
-            
-            // Add the city and time to the copy text
-            copyText += `• ${city.name} - ${timeStr} (${city.timezoneName})\n`;
-          }
-        });
-        
+      const formattedText = formatTimeZoneData();
+      
+      if (formattedText) {
         // Copy to clipboard
-        navigator.clipboard.writeText(copyText)
+        navigator.clipboard.writeText(formattedText)
           .then(() => {
             // Show the copied content in the toast
-            setToastMessage(`Copied to clipboard!\n\n${copyText}`);
+            setToastMessage(`Copied to clipboard!\n\n${formattedText}`);
             setShowToast(true);
             
-            // Hide toast after 5 seconds (increased from 3 seconds)
+            // Hide toast after 5 seconds
             setTimeout(() => {
               setShowToast(false);
             }, 5000);
@@ -707,6 +726,69 @@ function App() {
               setShowToast(false);
             }, 3000);
           });
+      }
+    }
+    
+    // Check if Cmd+G (or Ctrl+G) is pressed for Gmail sharing
+    if ((e.metaKey || e.ctrlKey) && e.key === 'g') {
+      e.preventDefault(); // Prevent default browser behavior
+      
+      const formattedText = formatTimeZoneData();
+      
+      if (formattedText) {
+        // Format the email subject
+        const timeStr = hoveredTimeSlot.dateTime.toFormat('MMM d');
+        const subject = `Let's meet`;
+        
+        // Create the Gmail URL
+        const encodedSubject = encodeURIComponent(subject);
+        const encodedBody = encodeURIComponent(formattedText);
+        const gmailUrl = `https://mail.google.com/mail/u/0/?fs=1&to=&su=${encodedSubject}&body=${encodedBody}&ui=2&tf=cm`;
+        
+        // Check if URL is too long (browser URL limits are typically around 2000 chars)
+        if (gmailUrl.length > 1800) {
+          setToastMessage(`Warning: Email content is very long and may be truncated. Consider selecting fewer timezones.`);
+          setShowToast(true);
+          
+          setTimeout(() => {
+            setShowToast(false);
+          }, 5000);
+        }
+        
+        // Open Gmail in a new tab
+        try {
+          window.open(gmailUrl, '_blank');
+          
+          // Show success toast
+          setToastMessage(`Opening Gmail with meeting times!`);
+          setShowToast(true);
+          
+          setTimeout(() => {
+            setShowToast(false);
+          }, 3000);
+        } catch (err) {
+          console.error('Failed to open Gmail: ', err);
+          
+          // If opening the window fails, offer to copy the formatted text
+          navigator.clipboard.writeText(formattedText)
+            .then(() => {
+              setToastMessage(`Gmail couldn't be opened. Email content copied to clipboard instead.\n\nNote: Your browser may be blocking popups.`);
+              setShowToast(true);
+              
+              setTimeout(() => {
+                setShowToast(false);
+              }, 5000);
+            })
+            .catch(clipErr => {
+              console.error('Failed to copy to clipboard: ', clipErr);
+              setToastMessage('Failed to open Gmail and copy to clipboard');
+              setShowToast(true);
+              
+              setTimeout(() => {
+                setShowToast(false);
+              }, 3000);
+            });
+        }
       }
     }
   };
@@ -1132,6 +1214,9 @@ function App() {
           <ul>
             <li>
               <kbd>⌘</kbd>+<kbd>Shift</kbd> to select timezones you want, then hover over time <kbd>⌘</kbd>+<kbd>C</kbd> to copy and paste.
+            </li>
+            <li>
+              <kbd>⌘</kbd>+<kbd>G</kbd> to share selected timezones via Gmail.
             </li>
             <li>
               Right click to set home timezone.
