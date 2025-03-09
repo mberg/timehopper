@@ -7,6 +7,7 @@ import cities from './data/cities';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
+// now for vercel
 // Define the type for our drag and drop
 const ItemTypes = {
   TIMEZONE: 'timezone'
@@ -131,19 +132,24 @@ const DraggableTimezoneRow = ({
   const getOffsetFromHome = () => {
     if (isHomeTimezone || !homeCity) return null;
     
-    // Get the current time in both timezones
-    const cityTime = DateTime.now().setZone(city.timezone);
-    const homeTime = DateTime.now().setZone(homeCity.timezone);
-    
-    // Calculate the offset in hours
-    const offsetMinutes = cityTime.offset - homeTime.offset;
-    const offsetHours = offsetMinutes / 60;
-    
-    // Format the offset string
-    const sign = offsetHours >= 0 ? '+' : '';
-    const formattedOffset = offsetHours === 0 ? '±0' : `${sign}${offsetHours}`;
-    
-    return formattedOffset;
+    try {
+      // Get the current time in both timezones
+      const cityTime = DateTime.now().setZone(city.timezone);
+      const homeTime = DateTime.now().setZone(homeCity.timezone);
+      
+      // Calculate the offset in hours
+      const offsetMinutes = cityTime.offset - homeTime.offset;
+      const offsetHours = offsetMinutes / 60;
+      
+      // Format the offset string
+      const sign = offsetHours >= 0 ? '+' : '';
+      const formattedOffset = offsetHours === 0 ? '±0' : `${sign}${offsetHours}`;
+      
+      return formattedOffset;
+    } catch (error) {
+      console.error("Error calculating timezone offset:", error);
+      return null; // Safely handle any timezone errors
+    }
   };
   
   const offsetFromHome = getOffsetFromHome();
@@ -522,12 +528,17 @@ function App() {
   const isDaylightSavingsChange = (city, hour) => {
     if (hour === 0) return false; // Skip first hour to avoid false positives
     
-    // Get the DateTime for this hour and the previous hour
-    const hourDateTime = referenceDateTime.plus({ hours: hour }).setZone(city.timezone);
-    const prevHourDateTime = referenceDateTime.plus({ hours: hour - 1 }).setZone(city.timezone);
-    
-    // Check if the DST status changed between these hours
-    return hourDateTime.isInDST !== prevHourDateTime.isInDST;
+    try {
+      // Get the DateTime for this hour and the previous hour
+      const hourDateTime = referenceDateTime.plus({ hours: hour }).setZone(city.timezone);
+      const prevHourDateTime = referenceDateTime.plus({ hours: hour - 1 }).setZone(city.timezone);
+      
+      // Check if the DST status changed between these hours
+      return hourDateTime.isInDST !== prevHourDateTime.isInDST;
+    } catch (error) {
+      console.error("Error checking DST change:", error);
+      return false; // Safely handle any timezone errors
+    }
   };
   
   // Update the getTimeline function to include DST change detection
@@ -700,13 +711,22 @@ function App() {
     }
   };
   
-  // Add keyboard event listener for copy
+  // Ensure the useEffect for keyboard event listener has all dependencies
   useEffect(() => {
     document.addEventListener('keydown', handleCopyTimeInfo);
     return () => {
       document.removeEventListener('keydown', handleCopyTimeInfo);
     };
-  }, [selectedRows, hoveredTime, hoveredTimeIndex, hoveredTimeSlot, selectedCities, use24HourFormat]);
+  }, [
+    selectedRows, 
+    hoveredTime, 
+    hoveredTimeIndex, 
+    hoveredTimeSlot, 
+    selectedCities, 
+    use24HourFormat,
+    // Add handleCopyTimeInfo to dependencies to avoid build warnings
+    handleCopyTimeInfo
+  ]);
   
   // Add state for dark mode
   const [darkMode, setDarkMode] = useState(() => {
