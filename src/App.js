@@ -465,16 +465,21 @@ function App() {
   // Add state for current time
   const [currentTime, setCurrentTime] = useState(DateTime.now());
 
-  // Update current time every second
+  // Make sure this useEffect is properly set up to update the current time
   useEffect(() => {
+    // Update time immediately on first render
+    setCurrentTime(DateTime.now());
+    
+    // Set up interval to update time every second
     const timer = setInterval(() => {
       setCurrentTime(DateTime.now());
     }, 1000);
     
+    // Clean up interval on component unmount
     return () => clearInterval(timer);
-  }, []);
+  }, []); // Empty dependency array to run only on mount/unmount
 
-  // Update the getTimeForCity function to match the timeline format for non-hour offsets
+  // Revert the getTimeForCity function to its original implementation
   const getTimeForCity = (city) => {
     // Get the current time in this city's timezone
     const cityTime = currentTime.setZone(city.timezone);
