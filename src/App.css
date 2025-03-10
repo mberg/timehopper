@@ -165,7 +165,7 @@
   margin: 0;
   width: 100%;
   box-sizing: border-box;
-  min-width: 900px; /* Match the container min-width */
+  min-width: 1025px; /* Match the container min-width */
 }
 
 /* Removed drop indicator styles, now using react-dnd */
