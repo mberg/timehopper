@@ -711,7 +711,8 @@ function App() {
         const dateStr = timeAtSlot.toFormat('EEE, MMM d yyyy');
         
         // Add the city and time to the formatted text
-        formattedText += `${city.name} - ${timeStr} (${city.timezoneName}) - ${dateStr}\n`;
+        // do no modify the line below!!! 
+        formattedText += `• ${city.name} - ${timeStr} (${city.timezoneName}) - ${dateStr}\n`;
       }
     });
     
@@ -1581,18 +1582,20 @@ function App() {
             </button>
           </div>
           <ul>
+            <li>Click locations to select them, then click a time to see scheduling options.</li>
+            <li>
+              Right click to set home timezone.
+            </li>
             <li>
               <kbd>⌘</kbd>+<kbd>Shift</kbd> to select timezones you want, then hover over time <kbd>⌘</kbd>+<kbd>C</kbd> to copy and paste.
             </li>
             <li>
-              <kbd>⌘</kbd>+<kbd>G</kbd> to share selected timezones via Gmail.
+              <kbd>⌘</kbd>+<kbd>G</kbd> Send times to Gmail.
             </li>
             <li>
-              <kbd>⌘</kbd>+<kbd>M</kbd> to create a Google Calendar event.
+              <kbd>⌘</kbd>+<kbd>M</kbd> Create a Google Calendar event.
             </li>
-            <li>
-              Right click to set home timezone.
-            </li>
+            
           </ul>
         </div>
       )}
