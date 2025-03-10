@@ -955,7 +955,11 @@ function App() {
   
   // Update the handleShowTips function to toggle the tips
   const handleShowTips = () => {
-    setShowTips(prevShowTips => !prevShowTips);
+    const newShowTips = !showTips;
+    setShowTips(newShowTips);
+    
+    // Save preference to localStorage
+    localStorage.setItem('hideTips', !newShowTips);
   };
   
   // Add state for keyboard navigation
