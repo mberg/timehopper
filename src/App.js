@@ -33,7 +33,11 @@ const DraggableTimezoneRow = ({
   isHomeTimezone, 
   setHomeCity,
   currentTime,
-  homeCity
+  homeCity,
+  onCheckboxChange,
+  handleTimeSlotClick,
+  showActionModal,
+  setActionModalPosition
 }) => {
   const ref = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -165,6 +169,17 @@ const DraggableTimezoneRow = ({
       onContextMenu={handleContextMenu}
     >
       <div className="drag-handle">⋮⋮</div>
+      <div className="row-checkbox">
+        <input 
+          type="checkbox" 
+          checked={isSelected}
+          onChange={(e) => {
+            e.stopPropagation(); // Prevent row selection
+            onCheckboxChange(index, e.target.checked);
+          }}
+          onClick={(e) => e.stopPropagation()} // Prevent row selection
+        />
+      </div>
       <div className="city-info">
         <div className="city-header">
           <h2>
@@ -200,14 +215,22 @@ const DraggableTimezoneRow = ({
             className={`time-slot ${slot.timeOfDay} ${hoveredTimeIndex === i ? 'highlight' : ''} ${slot.isHalfHour ? 'half-hour' : ''} ${slot.isCurrentHour ? 'current-hour' : ''} ${slot.isDSTChange ? 'dst-change' : ''}`}
             data-is-midnight={slot.isMidnight ? "true" : "false"}
             onMouseEnter={() => {
-              setHoveredTime(slot.hour);
-              setHoveredTimeIndex(i);
-              setHoveredTimeSlot(slot);
+              if (!showActionModal) {
+                setHoveredTime(slot.hour);
+                setHoveredTimeIndex(i);
+                setHoveredTimeSlot(slot);
+              }
             }}
             onMouseLeave={() => {
-              setHoveredTime(null);
-              setHoveredTimeIndex(null);
-              setHoveredTimeSlot(null);
+              if (!showActionModal) {
+                setHoveredTime(null);
+                setHoveredTimeIndex(null);
+                setHoveredTimeSlot(null);
+              }
+            }}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent row selection
+              handleTimeSlotClick(e, slot);
             }}
           >
             <div className="hour">{slot.time.split('\n')[0]}</div>
@@ -658,48 +681,48 @@ function App() {
     }
   };
   
+  // Format timezone data for clipboard, Gmail, and Calendar
+  const formatTimeZoneData = () => {
+    if (!hoveredTimeSlot || selectedRows.length === 0) return null;
+    
+    let formattedText = '';
+    
+    // Get the selected cities
+    const citiesToCopy = selectedRows.map(index => selectedCities[index]);
+    
+    // For each selected city, get the time at the hovered slot
+    citiesToCopy.forEach(city => {
+      if (city) {
+        // Get the time for this city at the hovered slot
+        const timeAtSlot = hoveredTimeSlot.dateTime.setZone(city.timezone);
+        
+        // Format the city name in uppercase
+        const cityNameUpper = city.name.toUpperCase();
+        
+        // Format the time with timezone abbreviation
+        const timeStr = use24HourFormat 
+          ? timeAtSlot.toFormat('HH:mm')
+          : timeAtSlot.toFormat('h:mma');
+        
+        // Get timezone abbreviation
+        const tzAbbr = timeAtSlot.toFormat('z');
+        
+        // Format the full date
+        const dateStr = timeAtSlot.toFormat('EEE, MMM d yyyy');
+        
+        // Add the city and time to the formatted text
+        formattedText += `${city.name} - ${timeStr} (${city.timezoneName}) - ${dateStr}\n`;
+      }
+    });
+    
+    // Add attribution with double line break
+    formattedText += '\nScheduled with ZoneWise';
+    
+    return formattedText;
+  };
+  
   // Handle copying time information
   const handleCopyTimeInfo = (e) => {
-    // Format timezone data for clipboard, Gmail, and Calendar
-    const formatTimeZoneData = () => {
-      if (!hoveredTimeSlot || selectedRows.length === 0) return null;
-      
-      let formattedText = '';
-      
-      // Get the selected cities
-      const citiesToCopy = selectedRows.map(index => selectedCities[index]);
-      
-      // For each selected city, get the time at the hovered slot
-      citiesToCopy.forEach(city => {
-        if (city) {
-          // Get the time for this city at the hovered slot
-          const timeAtSlot = hoveredTimeSlot.dateTime.setZone(city.timezone);
-          
-          // Format the city name in uppercase
-          const cityNameUpper = city.name.toUpperCase();
-          
-          // Format the time with timezone abbreviation
-          const timeStr = use24HourFormat 
-            ? timeAtSlot.toFormat('HH:mm')
-            : timeAtSlot.toFormat('h:mma');
-          
-          // Get timezone abbreviation
-          const tzAbbr = timeAtSlot.toFormat('z');
-          
-          // Format the full date
-          const dateStr = timeAtSlot.toFormat('EEE, MMM d yyyy');
-          
-          // Add the city and time to the formatted text
-          formattedText += `• ${city.name} - ${timeStr} (${city.timezoneName}) - ${dateStr}\n`;
-        }
-      });
-      
-      // Add attribution with double line break
-      formattedText += '\nScheduled with ZoneWise';
-      
-      return formattedText;
-    };
-    
     // Check if Cmd+C (or Ctrl+C) is pressed
     if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
       const formattedText = formatTimeZoneData();
@@ -1081,6 +1104,232 @@ function App() {
     }
   };
 
+  // Add state for the action modal
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [actionModalPosition, setActionModalPosition] = useState({ x: 0, y: 0 });
+  
+  // Handle checkbox change for row selection
+  const handleCheckboxChange = (index, isChecked) => {
+    if (isChecked) {
+      // Add to selection if not already selected
+      if (!selectedRows.includes(index)) {
+        setSelectedRows([...selectedRows, index]);
+      }
+    } else {
+      // Remove from selection
+      setSelectedRows(selectedRows.filter(i => i !== index));
+    }
+  };
+  
+  // Select all rows
+  const selectAllRows = () => {
+    const allIndices = selectedCities.map((_, index) => index);
+    setSelectedRows(allIndices);
+  };
+  
+  // Unselect all rows
+  const unselectAllRows = () => {
+    setSelectedRows([]);
+  };
+  
+  // Handle time slot click to show action modal
+  const handleTimeSlotClick = (e, slot) => {
+    // Set the hovered time slot for the actions
+    setHoveredTimeSlot(slot);
+    
+    // Calculate position for the modal
+    const rect = e.currentTarget.getBoundingClientRect();
+    setActionModalPosition({
+      x: rect.left + window.scrollX,
+      y: rect.bottom + window.scrollY
+    });
+    
+    // Show the modal
+    setShowActionModal(true);
+  };
+  
+  // Handle action button clicks
+  const handleCopyAction = () => {
+    // Use the existing clipboard logic
+    const formattedText = formatTimeZoneData();
+    
+    if (formattedText) {
+      navigator.clipboard.writeText(formattedText)
+        .then(() => {
+          setToastMessage(`Copied to clipboard!\n\n${formattedText}`);
+          setShowToast(true);
+          
+          setTimeout(() => {
+            setShowToast(false);
+          }, 5000);
+        })
+        .catch(err => {
+          console.error('Failed to copy: ', err);
+          setToastMessage('Failed to copy to clipboard');
+          setShowToast(true);
+          
+          setTimeout(() => {
+            setShowToast(false);
+          }, 3000);
+        });
+    }
+    
+    // Close the modal and clear selection
+    setShowActionModal(false);
+    setHoveredTime(null);
+    setHoveredTimeIndex(null);
+    setHoveredTimeSlot(null);
+  };
+  
+  const handleGmailAction = () => {
+    // Use the existing Gmail logic
+    const formattedText = formatTimeZoneData();
+    
+    if (formattedText) {
+      const timeStr = hoveredTimeSlot.dateTime.toFormat('MMM d');
+      const subject = `Let's meet`;
+      
+      const encodedSubject = encodeURIComponent(subject);
+      const encodedBody = encodeURIComponent(formattedText);
+      const gmailUrl = `https://mail.google.com/mail/u/0/?fs=1&to=&su=${encodedSubject}&body=${encodedBody}&ui=2&tf=cm`;
+      
+      if (gmailUrl.length > 1800) {
+        setToastMessage(`Warning: Email content is very long and may be truncated. Consider selecting fewer timezones.`);
+        setShowToast(true);
+        
+        setTimeout(() => {
+          setShowToast(false);
+        }, 5000);
+      }
+      
+      try {
+        window.open(gmailUrl, '_blank');
+        
+        setToastMessage(`Opening Gmail with meeting times!`);
+        setShowToast(true);
+        
+        setTimeout(() => {
+          setShowToast(false);
+        }, 3000);
+      } catch (err) {
+        console.error('Failed to open Gmail: ', err);
+        
+        navigator.clipboard.writeText(formattedText)
+          .then(() => {
+            setToastMessage(`Gmail couldn't be opened. Email content copied to clipboard instead.\n\nNote: Your browser may be blocking popups.`);
+            setShowToast(true);
+            
+            setTimeout(() => {
+              setShowToast(false);
+            }, 5000);
+          })
+          .catch(clipErr => {
+            console.error('Failed to copy to clipboard: ', clipErr);
+            setToastMessage('Failed to open Gmail and copy to clipboard');
+            setShowToast(true);
+            
+            setTimeout(() => {
+              setShowToast(false);
+            }, 3000);
+          });
+      }
+    }
+    
+    // Close the modal and clear selection
+    setShowActionModal(false);
+    setHoveredTime(null);
+    setHoveredTimeIndex(null);
+    setHoveredTimeSlot(null);
+  };
+  
+  const handleGCalAction = () => {
+    // Use the existing Google Calendar logic
+    const formattedText = formatTimeZoneData();
+    
+    if (formattedText && hoveredTimeSlot) {
+      const eventTime = hoveredTimeSlot.dateTime;
+      
+      const timeStr = eventTime.toFormat('MMM d');
+      const title = `Meeting on ${timeStr}`;
+      
+      const formatToGCalString = (dateTime) => {
+        return dateTime.toUTC().toFormat('yyyyMMdd\'T\'HHmmss\'Z\'');
+      };
+      
+      const startTime = formatToGCalString(eventTime);
+      const endTime = formatToGCalString(eventTime.plus({ minutes: 60 }));
+      
+      const encodedTitle = encodeURIComponent(title);
+      const encodedDetails = encodeURIComponent(formattedText);
+      const calendarUrl = `https://calendar.google.com/calendar/u/0/r/eventedit?text=${encodedTitle}&dates=${startTime}/${endTime}&details=${encodedDetails}&trp=true`;
+      
+      if (calendarUrl.length > 1800) {
+        setToastMessage(`Warning: Calendar event content is very long and may be truncated. Consider selecting fewer timezones.`);
+        setShowToast(true);
+        
+        setTimeout(() => {
+          setShowToast(false);
+        }, 5000);
+      }
+      
+      try {
+        window.open(calendarUrl, '_blank');
+        
+        setToastMessage(`Opening Google Calendar to create event!`);
+        setShowToast(true);
+        
+        setTimeout(() => {
+          setShowToast(false);
+        }, 3000);
+      } catch (err) {
+        console.error('Failed to open Google Calendar: ', err);
+        
+        navigator.clipboard.writeText(formattedText)
+          .then(() => {
+            setToastMessage(`Google Calendar couldn't be opened. Event details copied to clipboard instead.\n\nNote: Your browser may be blocking popups.`);
+            setShowToast(true);
+            
+            setTimeout(() => {
+              setShowToast(false);
+            }, 5000);
+          })
+          .catch(clipErr => {
+            console.error('Failed to copy to clipboard: ', clipErr);
+            setToastMessage('Failed to open Google Calendar and copy to clipboard');
+            setShowToast(true);
+            
+            setTimeout(() => {
+              setShowToast(false);
+            }, 3000);
+          });
+      }
+    }
+    
+    // Close the modal and clear selection
+    setShowActionModal(false);
+    setHoveredTime(null);
+    setHoveredTimeIndex(null);
+    setHoveredTimeSlot(null);
+  };
+  
+  // Handle clicking outside the action modal
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (showActionModal && !event.target.closest('.action-modal')) {
+        setShowActionModal(false);
+        // Clear selection when clicking outside
+        setHoveredTime(null);
+        setHoveredTimeIndex(null);
+        setHoveredTimeSlot(null);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showActionModal]);
+
   return (
     <div className="app">
       <h1>
@@ -1244,6 +1493,11 @@ function App() {
         </div>
       </div>
       
+      {/* Selection controls */}
+     {/* <div className="selection-controls">
+        <button className="selection-btn" onClick={selectAllRows}>Select All</button>
+        <button className="selection-btn" onClick={unselectAllRows}>Unselect All</button>
+      </div> */}
       <DndProvider backend={HTML5Backend}>
         <div className="timezone-container">
           {selectedCities.map((city, index) => (
@@ -1264,14 +1518,54 @@ function App() {
               use24HourFormat={use24HourFormat}
               isSelected={selectedRows.includes(index)}
               onRowSelect={handleRowSelection}
+              onCheckboxChange={handleCheckboxChange}
               isHomeTimezone={city.name === homeTimezone}
               setHomeCity={setHomeCity}
               currentTime={currentTime}
               homeCity={homeCity}
+              handleTimeSlotClick={handleTimeSlotClick}
+              showActionModal={showActionModal}
+              setActionModalPosition={setActionModalPosition}
             />
           ))}
         </div>
       </DndProvider>
+      
+      {/* Action Modal */}
+      {showActionModal && (
+        <div 
+          className="action-modal"
+          style={{ 
+            position: 'absolute',
+            top: actionModalPosition.y,
+            left: actionModalPosition.x
+          }}
+        >
+          <button className="action-btn" onClick={handleCopyAction}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy to Clipboard
+          </button>
+          <button className="action-btn" onClick={handleGmailAction}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            Gmail
+          </button>
+          <button className="action-btn" onClick={handleGCalAction}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Google Calendar
+          </button>
+        </div>
+      )}
       
       {/* Tips section */}
       {showTips && (

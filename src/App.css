@@ -165,7 +165,7 @@
   margin: 0;
   width: 100%;
   box-sizing: border-box;
-  min-width: 900px; /* Match the container min-width */
+  min-width: 1025px; /* Match the container min-width */
 }
 
 /* Removed drop indicator styles, now using react-dnd */
@@ -1132,4 +1132,125 @@ body.dark-mode .app h1 .wise {
     padding: 3px 6px; /* Larger touch target */
     font-size: 12px;
   }
+}
+
+/* Row checkbox styling */
+.row-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+.row-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+body.dark-mode .row-checkbox input[type="checkbox"] {
+  accent-color: #1976d2;
+}
+
+/* Selection controls */
+.selection-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.selection-btn {
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.selection-btn:hover {
+  background-color: #d0d0d0;
+}
+
+body.dark-mode .selection-btn {
+  background-color: #333;
+  color: #e0e0e0;
+}
+
+body.dark-mode .selection-btn:hover {
+  background-color: #444;
+}
+
+/* Action modal styling */
+.action-modal {
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+body.dark-mode .action-modal {
+  background-color: #333;
+  border-color: #555;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.action-btn:hover {
+  background-color: #f0f0f0;
+}
+
+body.dark-mode .action-btn {
+  color: #e0e0e0;
+}
+
+body.dark-mode .action-btn:hover {
+  background-color: #444;
+}
+
+.action-btn svg {
+  flex-shrink: 0;
+}
+
+/* Update time-slot to handle click events */
+.time-slot {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  padding: 5px 0;
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  box-sizing: border-box;
+  min-width: 25px; /* Minimum width for each time slot */
+  margin: 0 1px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 42px; /* Set fixed height to accommodate both formats */
+  font-weight: 400;
 }
