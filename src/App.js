@@ -716,8 +716,8 @@ function App() {
       }
     });
     
-    // Add attribution with double line break
-    formattedText += '\nScheduled with ZoneWise';
+    // Add attribution with double line break and hyperlink
+    formattedText += '\nScheduled with www.zonewise.app';
     
     return formattedText;
   };
@@ -828,7 +828,7 @@ function App() {
         
         // Format the event title
         const timeStr = eventTime.toFormat('MMM d');
-        const title = `Meeting on ${timeStr}`;
+        const title = ``;
         
         // Convert to format required by Google Calendar (YYYYMMDDTHHMMSSZ)
         const formatToGCalString = (dateTime) => {
@@ -890,6 +890,18 @@ function App() {
         }
       }
     }
+    
+    // Check if Cmd+I (or Ctrl+I) is pressed for iCal invite generation
+    if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
+      e.preventDefault(); // Prevent default browser behavior
+      
+      const formattedText = formatTimeZoneData();
+      
+      if (formattedText && hoveredTimeSlot) {
+        // Generate and download iCal file
+        generateICalFile();
+      }
+    }
   };
   
   // Ensure the useEffect for keyboard event listener has all dependencies
@@ -943,7 +955,11 @@ function App() {
   
   // Update the handleShowTips function to toggle the tips
   const handleShowTips = () => {
-    setShowTips(prevShowTips => !prevShowTips);
+    const newShowTips = !showTips;
+    setShowTips(newShowTips);
+    
+    // Save preference to localStorage
+    localStorage.setItem('hideTips', !newShowTips);
   };
   
   // Add state for keyboard navigation
@@ -1331,6 +1347,94 @@ function App() {
     };
   }, [showActionModal]);
 
+  // Function to generate and download iCal file
+  const generateICalFile = () => {
+    if (!hoveredTimeSlot || selectedRows.length === 0) return;
+    
+    try {
+      // Get the event time from the hovered time slot
+      const eventTime = hoveredTimeSlot.dateTime;
+      
+      // Format the event title
+      const timeStr = eventTime.toFormat('MMM d');
+      const title = `Meeting on ${timeStr}`;
+      
+      // Format start and end times in iCal format (YYYYMMDDTHHMMSSZ)
+      const startTime = eventTime.toUTC().toFormat('yyyyMMdd\'T\'HHmmss\'Z\'');
+      const endTime = eventTime.plus({ minutes: 60 }).toUTC().toFormat('yyyyMMdd\'T\'HHmmss\'Z\'');
+      
+      // Current timestamp for the iCal file
+      const now = DateTime.now().toUTC().toFormat('yyyyMMdd\'T\'HHmmss\'Z\'');
+      
+      // Generate a unique identifier for the event
+      const uid = `${now}-${Math.random().toString(36).substring(2, 11)}@zonewise.app`;
+      
+      // Format the description (using the same format as other actions)
+      const description = formatTimeZoneData().replace(/\n/g, '\\n');
+      
+      // Create the iCal content
+      const iCalContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//ZoneWise//Calendar//EN',
+        'CALSCALE:GREGORIAN',
+        'METHOD:REQUEST',
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${now}`,
+        `DTSTART:${startTime}`,
+        `DTEND:${endTime}`,
+        `SUMMARY:${title}`,
+        `DESCRIPTION:${description}`,
+        'SEQUENCE:0',
+        'STATUS:CONFIRMED',
+        'TRANSP:OPAQUE',
+        'URL:https://www.zonewise.app',
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].join('\r\n');
+      
+      // Create a Blob with the iCal content
+      const blob = new Blob([iCalContent], { type: 'text/calendar;charset=utf-8' });
+      
+      // Create a download link and trigger the download
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `meeting-${timeStr.toLowerCase().replace(/\s+/g, '-')}.ics`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Show success toast
+      setToastMessage(`iCal invite downloaded!`);
+      setShowToast(true);
+      
+      setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+    } catch (err) {
+      console.error('Failed to generate iCal file: ', err);
+      setToastMessage('Failed to generate iCal file');
+      setShowToast(true);
+      
+      setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+    }
+  };
+  
+  // Add handler for iCal action button
+  const handleICalAction = () => {
+    // Generate and download iCal file
+    generateICalFile();
+    
+    // Close the modal and clear selection
+    setShowActionModal(false);
+    setHoveredTime(null);
+    setHoveredTimeIndex(null);
+    setHoveredTimeSlot(null);
+  };
+
   return (
     <div className="app">
       <h1>
@@ -1565,6 +1669,21 @@ function App() {
             </svg>
             Google Calendar
           </button>
+          <button className="action-btn" onClick={handleICalAction}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+              <path d="M8 14h.01"></path>
+              <path d="M12 14h.01"></path>
+              <path d="M16 14h.01"></path>
+              <path d="M8 18h.01"></path>
+              <path d="M12 18h.01"></path>
+              <path d="M16 18h.01"></path>
+            </svg>
+            iCal Invite
+          </button>
         </div>
       )}
       
@@ -1595,7 +1714,9 @@ function App() {
             <li>
               <kbd>⌘</kbd>+<kbd>M</kbd> Create a Google Calendar event.
             </li>
-            
+            <li>
+              <kbd>⌘</kbd>+<kbd>I</kbd> Download an iCal invite (.ics file).
+            </li>
           </ul>
         </div>
       )}
