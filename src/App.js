@@ -6,7 +6,6 @@ import './App.css';
 import cities from './data/cities';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { Helmet } from 'react-helmet';
 
 // now for vercel
 // Define the type for our drag and drop
@@ -1434,43 +1433,18 @@ function App() {
 
   return (
     <div className="app" role="application" aria-label="ZoneWise - Time Zone Calculator and Meeting Scheduler">
-      <Helmet>
-        <title>ZoneWise | Modern Time Zone Calculator for Global Teams</title>
-        <meta name="description" content="ZoneWise is an easy-to-use time zone calculator and converter that helps global teams schedule meetings across different time zones. Plan your international calls with our modern time zone tool." />
-        <meta name="keywords" content="time zone calculator, time zone converter, meeting scheduler, global team scheduling, international meeting planner" />
-        <meta property="og:title" content="ZoneWise | Modern Time Zone Calculator" />
-        <meta property="og:description" content="The easiest way for global teams to schedule meetings across time zones. Convert times instantly with our modern interface." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.zonewise.app" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="ZoneWise | Time Zone Calculator" />
-        <meta name="twitter:description" content="Schedule international meetings with ease. The modern time zone converter for global teams." />
-        <link rel="canonical" href="https://www.zonewise.app" />
-        <script type="application/ld+json">
-          {`
-            {
-              "@context": "https://schema.org",
-              "@type": "WebApplication",
-              "name": "ZoneWise",
-              "description": "A modern time zone calculator and converter that helps global teams schedule meetings across different time zones.",
-              "applicationCategory": "BusinessApplication",
-              "operatingSystem": "Web",
-              "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD"
-              }
-            }
-          `}
-        </script>
-      </Helmet>
-      
       <header>
         <h1>
           <span className="zone">Zone</span>
           <span className="wise">Wise</span>
           <span className="visually-hidden"> - Time Zone Calculator and Meeting Scheduler</span>
         </h1>
+        {/* Add SEO meta content as standard HTML */}
+        <div style={{ display: 'none' }}>
+          <h2>Modern Time Zone Calculator for Global Teams</h2>
+          <p>ZoneWise is an easy-to-use time zone calculator and converter that helps global teams schedule meetings across different time zones.</p>
+          <p>Plan your international calls with our modern time zone tool.</p>
+        </div>
       </header>
       
       {/* App header without toggles */}
