@@ -1254,3 +1254,45 @@ body.dark-mode .action-btn:hover {
   height: 42px; /* Set fixed height to accommodate both formats */
   font-weight: 400;
 }
+
+/* Visually hidden class for accessibility */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  white-space: nowrap;
+}
+
+/* Footer styling */
+.app-footer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  text-align: left;
+  font-size: 14px;
+  color: #666;
+}
+
+body.dark-mode .app-footer {
+  border-top-color: #444;
+  color: #aaa;
+}
+
+.app-footer p {
+  margin: 5px 0;
+}
+
+.copyright {
+  font-size: 12px;
+  margin-top: 10px;
+  color: #888;
+}
+
+body.dark-mode .copyright {
+  color: #777;
+}
