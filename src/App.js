@@ -6,6 +6,7 @@ import './App.css';
 import cities from './data/cities';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { Helmet } from 'react-helmet';
 
 // now for vercel
 // Define the type for our drag and drop
@@ -717,7 +718,7 @@ function App() {
     });
     
     // Add attribution with double line break and hyperlink
-    formattedText += '\nScheduled with www.zonewise.app';
+    formattedText += '\nScheduled with https://www.zonewise.app';
     
     return formattedText;
   };
@@ -955,11 +956,7 @@ function App() {
   
   // Update the handleShowTips function to toggle the tips
   const handleShowTips = () => {
-    const newShowTips = !showTips;
-    setShowTips(newShowTips);
-    
-    // Save preference to localStorage
-    localStorage.setItem('hideTips', !newShowTips);
+    setShowTips(prevShowTips => !prevShowTips);
   };
   
   // Add state for keyboard navigation
@@ -1436,22 +1433,58 @@ function App() {
   };
 
   return (
-    <div className="app">
-      <h1>
-        <span className="zone">Zone</span>
-        <span className="wise">Wise</span>
-      </h1>
+    <div className="app" role="application" aria-label="ZoneWise - Time Zone Calculator and Meeting Scheduler">
+      <Helmet>
+        <title>ZoneWise | Modern Time Zone Calculator for Global Teams</title>
+        <meta name="description" content="ZoneWise is an easy-to-use time zone calculator and converter that helps global teams schedule meetings across different time zones. Plan your international calls with our modern time zone tool." />
+        <meta name="keywords" content="time zone calculator, time zone converter, meeting scheduler, global team scheduling, international meeting planner" />
+        <meta property="og:title" content="ZoneWise | Modern Time Zone Calculator" />
+        <meta property="og:description" content="The easiest way for global teams to schedule meetings across time zones. Convert times instantly with our modern interface." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.zonewise.app" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="ZoneWise | Time Zone Calculator" />
+        <meta name="twitter:description" content="Schedule international meetings with ease. The modern time zone converter for global teams." />
+        <link rel="canonical" href="https://www.zonewise.app" />
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "ZoneWise",
+              "description": "A modern time zone calculator and converter that helps global teams schedule meetings across different time zones.",
+              "applicationCategory": "BusinessApplication",
+              "operatingSystem": "Web",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              }
+            }
+          `}
+        </script>
+      </Helmet>
+      
+      <header>
+        <h1>
+          <span className="zone">Zone</span>
+          <span className="wise">Wise</span>
+          <span className="visually-hidden"> - Time Zone Calculator and Meeting Scheduler</span>
+        </h1>
+      </header>
       
       {/* App header without toggles */}
-      <div className="app-header">
+      <div className="app-header" role="banner">
         {/* Empty or can be removed if not needed */}
       </div>
       
       {/* City picker with search and controls on the same line */}
-      <div className="city-picker-container">
+      <nav className="city-picker-container" aria-label="Time zone controls">
         <div className="search-controls-row">
           <div className="search-dropdown" ref={searchDropdownRef}>
+            <label htmlFor="city-search" className="visually-hidden">Search for locations to add</label>
             <input
+              id="city-search"
               type="text"
               placeholder="Add locations..."
               value={searchTerm}
@@ -1459,9 +1492,12 @@ function App() {
               onFocus={() => setIsDropdownOpen(true)}
               onKeyDown={handleSearchKeyDown}
               className="city-search"
+              aria-expanded={isDropdownOpen}
+              aria-controls="city-dropdown"
+              aria-autocomplete="list"
             />
             {isDropdownOpen && (
-              <div className="city-dropdown">
+              <div id="city-dropdown" className="city-dropdown" role="listbox">
                 {filteredCities.length > 0 ? (
                   filteredCities.map((city, index) => (
                     <div 
@@ -1470,22 +1506,19 @@ function App() {
                       className={`city-option ${index === highlightedIndex ? 'highlighted' : ''}`}
                       onClick={() => {
                         addCity(city);
-                        // No need to set these here as they're now handled in the addCity function
-                        // setSearchTerm('');
-                        // setIsDropdownOpen(false);
-                        
-                        // Force the input to blur
                         if (document.activeElement instanceof HTMLElement) {
                           document.activeElement.blur();
                         }
                       }}
                       onMouseEnter={() => setHighlightedIndex(index)}
+                      role="option"
+                      aria-selected={index === highlightedIndex}
                     >
                       {city.name} ({city.timezoneName})
                     </div>
                   ))
                 ) : (
-                  <div className="no-results">No cities found</div>
+                  <div className="no-results" role="status">No cities found</div>
                 )}
               </div>
             )}
@@ -1514,11 +1547,16 @@ function App() {
                   <span 
                     className="selected-date"
                     onClick={() => setShowCalendar(prev => !prev)}
+                    role="button"
+                    tabIndex="0"
+                    aria-label={`Select date, currently ${formatSelectedDate()}`}
+                    aria-expanded={showCalendar}
+                    aria-controls="calendar-popup"
                   >
                     {formatSelectedDate()}
                   </span>
                   {showCalendar && (
-                    <div className="calendar-popup">
+                    <div id="calendar-popup" className="calendar-popup">
                       <Calendar
                         onChange={handleDateSelect}
                         value={selectedDate.toJSDate()}
@@ -1547,12 +1585,13 @@ function App() {
               Help
             </button>
             
-            <div className="dark-mode-toggle">
+            <div className="dark-mode-toggle" role="radiogroup" aria-label="Theme preference">
               <label className="toggle-label">
                 <button 
                   className={`toggle-button ${!darkMode ? 'active' : ''}`}
                   onClick={() => setDarkMode(false)}
                   aria-label="Light mode"
+                  aria-pressed={!darkMode}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="5"></circle>
@@ -1570,6 +1609,7 @@ function App() {
                   className={`toggle-button ${darkMode ? 'active' : ''}`}
                   onClick={() => setDarkMode(true)}
                   aria-label="Dark mode"
+                  aria-pressed={darkMode}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
@@ -1578,17 +1618,19 @@ function App() {
               </label>
             </div>
             
-            <div className="time-format-toggle">
+            <div className="time-format-toggle" role="radiogroup" aria-label="Time format preference">
               <label className="toggle-label">
                 <button 
                   className={`toggle-button ${!use24HourFormat ? 'active' : ''}`}
                   onClick={() => setUse24HourFormat(false)}
+                  aria-pressed={!use24HourFormat}
                 >
                   AM/PM
                 </button>
                 <button 
                   className={`toggle-button ${use24HourFormat ? 'active' : ''}`}
                   onClick={() => setUse24HourFormat(true)}
+                  aria-pressed={use24HourFormat}
                 >
                   24H
                 </button>
@@ -1596,45 +1638,47 @@ function App() {
             </div>
           </div>
         </div>
-      </div>
+      </nav>
       
-      {/* Selection controls */}
-     {/* <div className="selection-controls">
+      {/* <div className="selection-controls" aria-label="Row selection controls">
         <button className="selection-btn" onClick={selectAllRows}>Select All</button>
         <button className="selection-btn" onClick={unselectAllRows}>Unselect All</button>
       </div> */}
-      <DndProvider backend={HTML5Backend}>
-        <div className="timezone-container">
-          {selectedCities.map((city, index) => (
-            <DraggableTimezoneRow
-              key={city.name}
-              city={city}
-              index={index}
-              moveTimezone={moveTimezone}
-              removeCity={removeCity}
-              hoveredTime={hoveredTime}
-              hoveredTimeIndex={hoveredTimeIndex}
-              setHoveredTime={setHoveredTime}
-              setHoveredTimeIndex={setHoveredTimeIndex}
-              setHoveredTimeSlot={setHoveredTimeSlot}
-              getTimeForCity={getTimeForCity}
-              getTimeline={getTimeline}
-              referenceDateTime={referenceDateTime}
-              use24HourFormat={use24HourFormat}
-              isSelected={selectedRows.includes(index)}
-              onRowSelect={handleRowSelection}
-              onCheckboxChange={handleCheckboxChange}
-              isHomeTimezone={city.name === homeTimezone}
-              setHomeCity={setHomeCity}
-              currentTime={currentTime}
-              homeCity={homeCity}
-              handleTimeSlotClick={handleTimeSlotClick}
-              showActionModal={showActionModal}
-              setActionModalPosition={setActionModalPosition}
-            />
-          ))}
-        </div>
-      </DndProvider>
+      
+      <main>
+        <DndProvider backend={HTML5Backend}>
+          <section className="timezone-container" aria-label="Time zone comparison grid">
+            {selectedCities.map((city, index) => (
+              <DraggableTimezoneRow
+                key={city.name}
+                city={city}
+                index={index}
+                moveTimezone={moveTimezone}
+                removeCity={removeCity}
+                hoveredTime={hoveredTime}
+                hoveredTimeIndex={hoveredTimeIndex}
+                setHoveredTime={setHoveredTime}
+                setHoveredTimeIndex={setHoveredTimeIndex}
+                setHoveredTimeSlot={setHoveredTimeSlot}
+                getTimeForCity={getTimeForCity}
+                getTimeline={getTimeline}
+                referenceDateTime={referenceDateTime}
+                use24HourFormat={use24HourFormat}
+                isSelected={selectedRows.includes(index)}
+                onRowSelect={handleRowSelection}
+                onCheckboxChange={handleCheckboxChange}
+                isHomeTimezone={city.name === homeTimezone}
+                setHomeCity={setHomeCity}
+                currentTime={currentTime}
+                homeCity={homeCity}
+                handleTimeSlotClick={handleTimeSlotClick}
+                showActionModal={showActionModal}
+                setActionModalPosition={setActionModalPosition}
+              />
+            ))}
+          </section>
+        </DndProvider>
+      </main>
       
       {/* Action Modal */}
       {showActionModal && (
@@ -1645,6 +1689,8 @@ function App() {
             top: actionModalPosition.y,
             left: actionModalPosition.x
           }}
+          role="dialog"
+          aria-label="Time slot actions"
         >
           <button className="action-btn" onClick={handleCopyAction}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1689,7 +1735,7 @@ function App() {
       
       {/* Tips section */}
       {showTips && (
-        <div className="tips-section">
+        <aside className="tips-section" aria-label="Usage tips">
           <div className="tips-header">
             <h3>Tips</h3>
             <button 
@@ -1718,15 +1764,21 @@ function App() {
               <kbd>⌘</kbd>+<kbd>I</kbd> Download an iCal invite (.ics file).
             </li>
           </ul>
-        </div>
+        </aside>
       )}
       
       {/* Toast notification */}
       {showToast && (
-        <div className="toast-notification">
+        <div className="toast-notification" role="alert" aria-live="polite">
           {toastMessage}
         </div>
       )}
+      
+      <footer className="app-footer">
+        <p>ZoneWise - The modern time zone calculator for global teams</p>
+        <p>&nbsp;</p>
+        <p className="copyright">&copy; 2025 ZoneWise. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
